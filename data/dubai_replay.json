@@ -1,0 +1,23 @@
+{
+  "note": "One 13:00-local row per location, from the Open-Meteo historical archive (ERA5-backed) at that grid point. record_air_temp_c is the official NCM station reading for the same day. Weather data CC-BY 4.0.",
+  "days": [
+    {"id": "ncm-2025-05-24-sweihan-51.6C", "place": "Sweihan, Al Ain", "date": "2025-05-24",
+     "air_temp_c": 46.6, "humidity_pct": 5, "solar_wm2": 1000.0, "wind_ms": 4.47,
+     "cos_zenith": 0.994, "direct_fraction": 0.755, "record_air_temp_c": 51.6},
+    {"id": "ncm-2025-04-27-fujairah-46.6C", "place": "Fujairah", "date": "2025-04-27",
+     "air_temp_c": 37.2, "humidity_pct": 22, "solar_wm2": 914.0, "wind_ms": 2.36,
+     "cos_zenith": 0.976, "direct_fraction": 0.685, "record_air_temp_c": 46.6},
+    {"id": "ncm-2026-08-01-al-shawamekh-50C", "place": "Al Shawamekh, Abu Dhabi", "date": "2026-08-01",
+     "air_temp_c": 48.1, "humidity_pct": 10, "solar_wm2": 951.0, "wind_ms": 1.31,
+     "cos_zenith": 0.991, "direct_fraction": 0.737, "record_air_temp_c": 50.0},
+    {"id": "dubai-2026-08-05-grid-extreme", "place": "Dubai", "date": "2026-08-05",
+     "air_temp_c": 44.4, "humidity_pct": 23, "solar_wm2": 915.0, "wind_ms": 3.61,
+     "cos_zenith": 0.987, "direct_fraction": 0.746},
+    {"id": "dubai-2026-07-01-mohre", "place": "Dubai", "date": "2026-07-01",
+     "air_temp_c": 36.9, "humidity_pct": 41, "solar_wm2": 882.0, "wind_ms": 3.69,
+     "cos_zenith": 0.996, "direct_fraction": 0.673},
+    {"id": "dubai-2026-01-15-control", "place": "Dubai", "date": "2026-01-15",
+     "air_temp_c": 27.3, "humidity_pct": 24, "solar_wm2": 639.0, "wind_ms": 3.33,
+     "cos_zenith": 0.689, "direct_fraction": 0.659}
+  ]
+}

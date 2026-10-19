@@ -18,6 +18,12 @@ from .types import HeatState, PopulationGroup, RiskLevel
 FIXTURE = Path(__file__).resolve().parents[2] / "data" / "dubai_replay.json"
 
 
+def _require(condition: object, msg: str) -> None:
+    """Explicit raise so the check survives `python -O` (asserts are stripped)."""
+    if not condition:
+        raise AssertionError(msg)
+
+
 @dataclass(frozen=True)
 class ReplayDay:
     id: str
@@ -69,30 +75,31 @@ def validate(days: Sequence[ReplayDay]) -> list[str]:
     claims: list[str] = []
 
     mohre = [d for d in days if "mohre" in d.id]
-    assert mohre, "no MOHRE-window sample in the fixture"
+    _require(mohre, "no MOHRE-window sample in the fixture")
     for d in mohre:
-        assert band(d) >= RiskLevel.HIGH, d.id
+        _require(band(d) >= RiskLevel.HIGH, d.id)
     claims.append(f"{len(mohre)} midday sample inside the MOHRE ban window bands HIGH or worse")
 
     controls = [d for d in days if "control" in d.id]
-    assert controls, "no off-season control in the fixture"
+    _require(controls, "no off-season control in the fixture")
     for d in controls:
-        assert band(d) == RiskLevel.LOW, d.id
+        _require(band(d) == RiskLevel.LOW, d.id)
     claims.append(f"{len(controls)} mild off-season control bands LOW")
 
     for d in days:
-        assert d.outdoor_wbgt_c() > d.fallback_wbgt_c(), d.id
+        _require(d.outdoor_wbgt_c() > d.fallback_wbgt_c(), d.id)
     claims.append("the solar-aware form exceeds the no-solar fallback on every day")
 
     sweihan = next(d for d in days if d.id.startswith("ncm-2025-05-24"))
     humid = next(d for d in days if d.id.startswith("dubai-2026-08-05"))
-    assert sweihan.air_temp_c > humid.air_temp_c
-    assert sweihan.outdoor_wbgt_c() < humid.outdoor_wbgt_c()
+    _require(sweihan.air_temp_c > humid.air_temp_c, "reanalysis order inverted")
+    _require(sweihan.outdoor_wbgt_c() < humid.outdoor_wbgt_c(),
+             "a hotter but drier day does not band lower")
     claims.append("a hotter but drier day bands lower than a cooler but more humid one")
 
     records = [d for d in days if d.record_air_temp_c is not None]
     for d in records:
-        assert d.air_temp_c < d.record_air_temp_c, d.id
+        _require(d.air_temp_c < d.record_air_temp_c, d.id)
     claims.append(f"{len(records)} reanalysis grid samples sit below their station records")
 
     return claims

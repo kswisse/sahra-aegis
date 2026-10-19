@@ -21,6 +21,8 @@ def test_without_site_sensor_wbgt_is_unset_and_tier_is_weather():
 
 def test_satellite_never_overrides_the_weather_tier():
     s = fuse("school-dxb-001", AT, SatelliteReading(lst_c=60.0), WX, None)
+    assert s.wbgt_c is None
+    assert s.source_tier == "weather"
     assert s.air_temp_c == 41.0
     assert s.humidity_pct == 62.0
 

@@ -3,7 +3,7 @@
 Fixtures were fetched once from the Open-Meteo historical archive (ERA5-backed)
 and committed, so validation is offline and reproducible.
 ponytail: the live archive fetch is not wired; re-fetch only when the fixture
-rows age out. A `--fetch` flag replaces the committed file behind load_fixtures.
+rows age out, replacing the committed file behind load_fixtures.
 """
 
 import json

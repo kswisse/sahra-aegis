@@ -1,3 +1,4 @@
+from ..risk import THRESHOLD_C
 from ..types import CycleResult
 
 
@@ -5,7 +6,7 @@ def render_advisory(result: CycleResult) -> str:
     a = result.assessment
     lines = [
         f"SAHRA heat advisory - zone {a.zone_id}",
-        f"Risk level: {a.level.value} (WBGT {a.wbgt_c}C, threshold 28C)",
+        f"Risk level: {a.level.value} (WBGT {a.wbgt_c}C, threshold {THRESHOLD_C:g}C)",
         f"Population: {a.group.value}",
         "Recommended actions:",
     ]

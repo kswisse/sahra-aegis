@@ -28,6 +28,7 @@ def run(tmp_path, wbgt, approved_by=None):
 def test_calm_day_produces_advisory_only(tmp_path):
     r = run(tmp_path, 25.0)
     assert r.assessment.level is RiskLevel.LOW
+    assert all(a.intervention.kind is InterventionKind.ADVISE for a in r.actions)
     assert [a.status for a in r.actions] == ["executed"]
 
 

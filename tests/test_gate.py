@@ -18,8 +18,9 @@ def test_consequential_action_without_an_approver_is_refused():
 
 
 def test_blank_approver_is_treated_as_absent():
-    with pytest.raises(ApprovalRequired):
-        ApprovalGate().authorize(i(True), "")
+    for blank in ("", "   "):
+        with pytest.raises(ApprovalRequired):
+            ApprovalGate().authorize(i(True), blank)
 
 
 def test_consequential_action_passes_with_an_approver():

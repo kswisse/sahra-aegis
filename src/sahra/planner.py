@@ -1,3 +1,4 @@
+from .risk import THRESHOLD_C
 from .types import Intervention, InterventionKind, RiskAssessment, RiskLevel
 
 
@@ -13,7 +14,7 @@ def plan(assessment: RiskAssessment) -> list[Intervention]:
     if assessment.level in (RiskLevel.MODERATE, RiskLevel.HIGH, RiskLevel.EXTREME):
         out.append(Intervention(
             kind=InterventionKind.SHIFT_ACTIVITY,
-            reason=f"WBGT {wbgt}C exceeds the 28C occupational threshold: propose shifting activity out of peak hours",
+            reason=f"WBGT {wbgt}C exceeds the {THRESHOLD_C:g}C occupational threshold: propose shifting activity out of peak hours",
             expected_risk_reduction=0.35,
         ))
     if assessment.level in (RiskLevel.HIGH, RiskLevel.EXTREME):

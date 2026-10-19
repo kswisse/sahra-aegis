@@ -76,7 +76,7 @@ def wbgt_outdoor_c(
 
 
 def _level(wbgt_c: float) -> RiskLevel:
-    if wbgt_c < 28.0:
+    if wbgt_c < THRESHOLD_C:
         return RiskLevel.LOW
     if wbgt_c < 30.0:
         return RiskLevel.MODERATE

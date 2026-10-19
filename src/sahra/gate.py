@@ -10,7 +10,7 @@ class ApprovalGate:
     never silently downgraded."""
 
     def authorize(self, intervention: Intervention, approved_by: str | None) -> Intervention:
-        if intervention.consequential and not approved_by:
+        if intervention.consequential and not (approved_by or "").strip():
             raise ApprovalRequired(
                 f"human approval required for consequential intervention: {intervention.kind.value}"
             )

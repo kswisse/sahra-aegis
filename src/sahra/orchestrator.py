@@ -5,7 +5,7 @@ from .audit import AuditLog
 from .fusion import fuse
 from .gate import ApprovalGate, ApprovalRequired
 from .planner import plan
-from .risk import assess
+from .risk import THRESHOLD_C, assess
 from .types import (
     ActionRecord,
     CycleResult,
@@ -38,7 +38,7 @@ def run_cycle(
         trace = [
             f"tier={state.source_tier}",
             f"wbgt={assessment.wbgt_c}",
-            "threshold=28.0",
+            f"threshold={THRESHOLD_C}",
             f"level={assessment.level.value}",
             f"expected_risk_reduction={intervention.expected_risk_reduction}",
         ]

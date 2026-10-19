@@ -24,6 +24,10 @@ def test_moderate_adds_shift_activity_which_outranks_the_advisory():
     assert InterventionKind.ADVISE in ks
 
 
+def test_high_adds_cooling():
+    assert InterventionKind.ACTIVATE_COOLING in kinds(31.5, RiskLevel.HIGH)
+
+
 def test_extreme_adds_cooling_and_escalation():
     ks = kinds(33.0, RiskLevel.EXTREME)
     assert InterventionKind.ACTIVATE_COOLING in ks

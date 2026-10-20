@@ -19,7 +19,7 @@ def test_solar_noon_is_when_the_sun_is_highest_and_near_overhead():
     noon = max(day, key=lambda t: cos_zenith(25.202108, 55.302376, t))
     assert datetime.fromisoformat("2026-07-01T12:05:00+04:00") <= noon <= datetime.fromisoformat("2026-07-01T12:30:00+04:00")
     # 0.999 is cos(latitude - solar declination) for that date, i.e. the sun overhead.
-    assert cos_zenith(25.202108, 55.302376, noon) == pytest.approx(0.999, abs=0.03)
+    assert cos_zenith(25.202108, 55.302376, noon) == pytest.approx(0.999, abs=0.005)
 
 
 def test_zenith_is_negative_at_night():

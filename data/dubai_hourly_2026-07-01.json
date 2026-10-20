@@ -3,12 +3,16 @@
     "source": "Open-Meteo Historical Weather API (archive-api.open-meteo.com)",
     "source_url": "https://archive-api.open-meteo.com/v1/archive?latitude=25.2048&longitude=55.2708&start_date=2026-07-01&end_date=2026-07-01&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,wind_speed_10m,shortwave_radiation,direct_radiation,diffuse_radiation&daily=sunrise,sunset&timezone=Asia/Dubai",
     "dataset": "ECMWF ERA5 reanalysis, hourly, 10 m wind and 2 m temperature",
+    "latitude": 25.202108,
+    "longitude": 55.302376,
+    "elevation_m": 6,
+    "timezone": "Asia/Dubai",
+    "zone_id": "dubai-2026-07-01",
     "retrieved_at": "2026-10-20T16:35:39Z",
     "license": "Open-Meteo: CC BY 4.0; ERA5 reanalysis: Copernicus Climate Change Service",
-    "elevation_m": 6,
     "sunrise": "2026-07-01T05:32",
     "sunset": "2026-07-01T19:13",
-    "note": "ERA5 reanalysis gridded output, not station observation; wind converted from km/h to m/s and radiation reported as W/m2. Hours are local Asia/Dubai (UTC+04:00). Covers the 09:00-12:00 exposure peak that the 13:00-only phase-1 fixture missed."
+    "note": "ERA5 reanalysis gridded output, not station observation; wind converted from km/h to m/s and radiation reported as W/m2. Hours are local Asia/Dubai (UTC+04:00); site coordinates 25.202108/55.302376 are the same ERA5 grid cell as the request point in source_url. Covers the full diurnal cycle of 2026-07-01, including the mid-morning exposure window and the co-equal afternoon peak, which the 13:00-only phase-1 fixture did not cover."
   },
   "hours": [
     {

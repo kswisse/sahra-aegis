@@ -6,9 +6,6 @@ from ..risk import wbgt_outdoor_c
 from ..solar import LOCAL_TZ, cos_zenith
 from ..types import WeatherReading
 
-_SITE_LATITUDE_DEG = 25.2048
-_SITE_LONGITUDE_DEG = 55.2708
-
 
 class WeatherProvider:
     """Gridded weather. Reads from a fixture mapping; a live HTTP client
@@ -39,26 +36,31 @@ class WeatherProvider:
 
 class HourlyWeatherProvider:
     """Time-indexed weather from a committed hourly fixture: one archived day,
-    one hour per reading. The outdoor WBGT is derived from the fixture's own
-    irradiance and wind, so the index carries the exposure peak of the day
-    rather than a single midday row.
+    one hour per reading. The site identity (coordinates, zone) comes from the
+    fixture's own metadata, so the provider holds no site constants. The
+    outdoor WBGT is derived from the fixture's irradiance and wind, so the
+    index carries the exposure peak of the day rather than a single midday row.
 
-    The fixture is the zone, so `zone_id` is accepted for interface parity
-    with `WeatherProvider` and does not select data. An `at` outside the
-    archived hours raises KeyError.
+    `zone_id` must name the fixture's zone; an unknown zone, or an hour
+    outside the archive, raises KeyError.
     """
 
     def __init__(self, fixture_path: Path | str):
         payload = json.loads(Path(fixture_path).read_text(encoding="utf-8"))
+        meta = payload["meta"]
+        self._zone_id = meta["zone_id"]
+        self._latitude_deg = meta["latitude"]
+        self._longitude_deg = meta["longitude"]
         self._rows = {datetime.fromisoformat(row["time"]): row for row in payload["hours"]}
 
     def sample(self, zone_id: str, at: datetime) -> WeatherReading:
+        self._check_zone(zone_id)
         row = self._rows[self._local_key(at)]
         solar = row["global_radiation_wm2"]
         direct_fraction = row["direct_radiation_wm2"] / solar if solar > 0 else 0.8
         index = wbgt_outdoor_c(
             row["air_temp_c"], row["humidity_pct"], solar, row["wind_ms"],
-            cos_zenith(_SITE_LATITUDE_DEG, _SITE_LONGITUDE_DEG, at),
+            cos_zenith(self._latitude_deg, self._longitude_deg, at),
             direct_fraction,
         )
         return WeatherReading(
@@ -69,7 +71,12 @@ class HourlyWeatherProvider:
         )
 
     def hours(self, zone_id: str) -> list[datetime]:
+        self._check_zone(zone_id)
         return sorted(self._rows)
+
+    def _check_zone(self, zone_id: str) -> None:
+        if zone_id != self._zone_id:
+            raise KeyError(zone_id)
 
     @staticmethod
     def _local_key(at: datetime) -> datetime:

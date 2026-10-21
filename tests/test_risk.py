@@ -1,7 +1,7 @@
 # tests/test_risk.py
 from datetime import datetime, timezone
 import pytest
-from sahra.risk import approx_wbgt_c, assess, wbgt_outdoor_c
+from sahra.risk import approx_wbgt_c, assess, globe_temp_c, wbgt_outdoor_c
 from sahra.types import HeatState, PopulationGroup, RiskLevel
 
 AT = datetime(2027, 7, 14, 13, 0, tzinfo=timezone.utc)
@@ -58,6 +58,13 @@ def test_outdoor_wbgt_collapses_to_the_fallback_without_solar():
 def test_outdoor_wbgt_rises_with_solar_and_falls_with_wind():
     assert wbgt_outdoor_c(42.0, 40.0, 900.0, 2.0, 0.9) > wbgt_outdoor_c(42.0, 40.0, 300.0, 2.0, 0.9)
     assert wbgt_outdoor_c(42.0, 40.0, 900.0, 1.0, 0.9) > wbgt_outdoor_c(42.0, 40.0, 900.0, 5.0, 0.9)
+
+
+def test_negative_irradiance_is_clamped_to_zero_and_never_cools_the_globe():
+    """A negative irradiance is a data error, not a cooling effect."""
+    assert globe_temp_c(42.0, -500.0, 2.0, 0.90) == globe_temp_c(42.0, 0.0, 2.0, 0.90)
+    assert globe_temp_c(42.0, -500.0, 2.0, 0.90) >= 42.0
+    assert wbgt_outdoor_c(42.0, 40.0, -500.0, 2.0, 0.90) == wbgt_outdoor_c(42.0, 40.0, 0.0, 2.0, 0.90)
 
 
 def test_the_solar_term_can_raise_the_band_above_the_fallback():

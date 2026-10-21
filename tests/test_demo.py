@@ -23,3 +23,12 @@ def test_demo_writes_an_audit_file(tmp_path):
 def test_demo_covers_both_population_groups(tmp_path):
     out = run_demo(tmp_path)
     assert "school" in out and "outdoor_worker" in out
+
+
+def test_demo_reports_the_counts_instead_of_assuming_all_approved(tmp_path):
+    out = run_demo(tmp_path)
+    verify = [line for line in out.splitlines() if line.startswith("verify:")]
+    assert len(verify) == 2
+    assert "4 actions decided, 3 actions executed, 1 refused" in verify[0]
+    assert "3 actions decided, 3 actions executed" in verify[1]
+    assert "all approved" not in out.lower()

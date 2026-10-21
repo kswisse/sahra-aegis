@@ -28,6 +28,7 @@ def write_extreme_fixture(path):
 
     The archived ERA5 day peaks at 31.4 C and never reaches the 32 C extreme
     band, so the escalation path needs its own fixture to be exercised at all.
+    Every row here is a test vector, not observed weather.
     """
     def hour(h, air, solar, direct):
         return {
@@ -41,9 +42,10 @@ def write_extreme_fixture(path):
         "meta": {
             "zone_id": "synthetic-extreme", "latitude": 25.202108,
             "longitude": 55.302376, "timezone": "Asia/Dubai",
+            "dataset": "synthetic test vector",
             "note": "synthetic fixture written by the test, not observed weather",
         },
-        "hours": [hour("11", 37.0, 800.0, 560.0),
+        "hours": [hour("11", 34.0, 800.0, 560.0),
                   hour("12", 38.5, 900.0, 620.0),
                   hour("13", 37.0, 820.0, 570.0)],
     }
@@ -67,11 +69,19 @@ def test_one_day_is_24_ordered_hourly_steps(tmp_path):
 
 
 def test_the_day_reads_as_a_rising_curve_and_peaks_in_the_midday_window(tmp_path):
-    timeline, _ = run_archived_day(tmp_path)
+    timeline, audit = run_archived_day(tmp_path)
     levels = [step.level for step in timeline.steps]
+    assert levels == (
+        [RiskLevel.MODERATE] * 5
+        + [RiskLevel.LOW] * 2
+        + [RiskLevel.MODERATE] * 2
+        + [RiskLevel.HIGH] * 11
+        + [RiskLevel.MODERATE] * 4
+    )
     assert levels[0] is RiskLevel.MODERATE
-    assert RiskLevel.LOW in levels
-    assert RiskLevel.HIGH in levels
+    assert levels[9] is RiskLevel.HIGH
+    assert levels[20] is RiskLevel.MODERATE
+    assert levels[-1] is RiskLevel.MODERATE
     assert RiskLevel.EXTREME not in levels
     assert timeline.peak_wbgt_c == pytest.approx(31.4, abs=0.05)
     assert timeline.peak_at == datetime.fromisoformat("2026-07-01T11:00:00+04:00")
@@ -94,6 +104,15 @@ def test_the_day_reads_as_a_rising_curve_and_peaks_in_the_midday_window(tmp_path
     dispatched = [kind for step in timeline.steps for kind in step.dispatched_kinds]
     assert sorted(dispatched) == sorted(set(dispatched))
 
+    logged = [r.intervention.kind for r in audit.read_all() if r.at == high.at]
+    assert logged == [InterventionKind.SHIFT_ACTIVITY, InterventionKind.ACTIVATE_COOLING,
+                      InterventionKind.ADVISE]
+    assert list(zip(high.dispatched_kinds + high.active_kinds, high.statuses)) == [
+        (InterventionKind.ACTIVATE_COOLING, "executed"),
+        (InterventionKind.SHIFT_ACTIVITY, "executed"),
+        (InterventionKind.ADVISE, "executed"),
+    ]
+
 
 def test_every_action_of_every_cycle_is_in_the_audit_file(tmp_path):
     timeline, audit = run_archived_day(tmp_path)
@@ -101,10 +120,10 @@ def test_every_action_of_every_cycle_is_in_the_audit_file(tmp_path):
     total = sum(len(step.statuses) for step in timeline.steps)
     assert total == 57
     assert len(records) == total
-    assert [r.status for r in records] == [s for step in timeline.steps for s in step.statuses]
-    assert sorted(r.intervention.kind for r in records) == sorted(
-        kind for step in timeline.steps
-        for kind in step.dispatched_kinds + step.active_kinds)
+    for step in timeline.steps:
+        pairs = list(zip(step.dispatched_kinds + step.active_kinds, step.statuses))
+        logged = sorted((r.intervention.kind, r.status) for r in records if r.at == step.at)
+        assert sorted(pairs) == logged
 
 
 def test_a_refused_escalation_becomes_a_pending_request_that_an_approval_executes(tmp_path):
@@ -114,10 +133,20 @@ def test_a_refused_escalation_becomes_a_pending_request_that_an_approval_execute
     timeline = run_day("synthetic-extreme", PopulationGroup.OUTDOOR_WORKER, path,
                        ApprovalGate(), audit, queue)
 
-    assert [step.level for step in timeline.steps] == [RiskLevel.HIGH, RiskLevel.EXTREME, RiskLevel.HIGH]
+    assert [step.level for step in timeline.steps] == [RiskLevel.MODERATE, RiskLevel.EXTREME, RiskLevel.HIGH]
     extreme = timeline.steps[1]
-    assert extreme.dispatched_kinds == [InterventionKind.ESCALATE]
+    assert extreme.dispatched_kinds == [InterventionKind.ESCALATE, InterventionKind.ACTIVATE_COOLING]
+    assert extreme.active_kinds == [InterventionKind.SHIFT_ACTIVITY, InterventionKind.ADVISE]
     assert extreme.statuses == ["refused", "executed", "executed", "executed"]
+    assert list(zip(extreme.dispatched_kinds + extreme.active_kinds, extreme.statuses)) == [
+        (InterventionKind.ESCALATE, "refused"),
+        (InterventionKind.ACTIVATE_COOLING, "executed"),
+        (InterventionKind.SHIFT_ACTIVITY, "executed"),
+        (InterventionKind.ADVISE, "executed"),
+    ]
+    logged = [r.intervention.kind for r in audit.read_all() if r.at == extreme.at]
+    assert logged == [InterventionKind.ESCALATE, InterventionKind.SHIFT_ACTIVITY,
+                      InterventionKind.ACTIVATE_COOLING, InterventionKind.ADVISE]
 
     assert len(timeline.pending_ids) == 1
     pending = queue.get(timeline.pending_ids[0])
@@ -132,10 +161,26 @@ def test_a_refused_escalation_becomes_a_pending_request_that_an_approval_execute
     assert record.approved_by == APPROVER
     assert record.intervention.kind is InterventionKind.ESCALATE
     written = audit.read_all()
-    assert len(written) == 11
+    assert len(written) == 10
     assert written[-1].status == "executed"
     assert written[-1].approved_by == APPROVER
     assert queue.pending() == []
+
+
+def test_an_unusable_fixture_fails_loudly_and_names_the_file(tmp_path):
+    empty = tmp_path / "empty.json"
+    empty.write_text(json.dumps({
+        "meta": {"zone_id": "synthetic-empty", "latitude": 25.202108,
+                 "longitude": 55.302376, "dataset": "synthetic test vector"},
+        "hours": [],
+    }), encoding="utf-8")
+    audit = AuditLog(tmp_path / "audit.jsonl")
+    with pytest.raises(ValueError, match="no hours"):
+        run_day("synthetic-empty", PopulationGroup.SCHOOL, empty, ApprovalGate(), audit)
+    with pytest.raises(KeyError) as unknown_zone:
+        run_day("dubai", PopulationGroup.SCHOOL, empty, ApprovalGate(), audit)
+    assert str(empty) in unknown_zone.value.args[0]
+    assert "dubai" in unknown_zone.value.args[0]
 
 
 def test_the_day_runs_offline(tmp_path, monkeypatch):

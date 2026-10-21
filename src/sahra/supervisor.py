@@ -8,7 +8,9 @@ rather than 24 repetitions of the same advisory.
 
 A consequential action refused for want of an approver is opened as a pending
 request when an approval queue is supplied; the refusal itself stays in the
-audit exactly as it was written. No LLM and no network take part.
+audit exactly as it was written. Each step keeps its actions as (kind, status)
+pairs, so a kind and its outcome can never drift apart. No LLM and no network
+take part.
 """
 
 from datetime import datetime
@@ -29,7 +31,8 @@ class HourlyStep(BaseModel):
 
     `dispatched_kinds` are the kinds this hour put on the table for the first
     time today; `active_kinds` are the kinds already in force from earlier in
-    the day. `statuses` is what the gate did with each action, in action order.
+    the day. `statuses[i]` is the outcome of `(dispatched_kinds +
+    active_kinds)[i]`, so the two kind lists and the statuses always pair up.
     """
 
     at: datetime
@@ -66,9 +69,12 @@ def run_day(
 ) -> DayTimeline:
     """Run one cycle per hour over the fixture's hours, in order."""
     provider = HourlyWeatherProvider(fixture_path)
-    hours = provider.hours(zone_id)
+    try:
+        hours = provider.hours(zone_id)
+    except KeyError as exc:
+        raise KeyError(f"fixture {fixture_path}: {exc}") from exc
     if not hours:
-        raise ValueError(f"fixture has no hours for zone {zone_id}")
+        raise ValueError(f"fixture {fixture_path} has no hours for zone {zone_id}")
 
     steps: list[HourlyStep] = []
     pending_ids: list[str] = []
@@ -77,21 +83,26 @@ def run_day(
     peak_at = hours[0]
 
     for at in hours:
-        weather = provider.sample(zone_id, at)
+        try:
+            weather = provider.sample(zone_id, at)
+        except KeyError as exc:
+            raise KeyError(f"fixture {fixture_path}: {exc}") from exc
         result = run_cycle(
             zone_id=zone_id, group=group, at=at, satellite=None, weather=weather,
             site=None, gate=gate, audit=audit,
         )
-        kinds = [action.intervention.kind for action in result.actions]
+        pairs = [(action.intervention.kind, action.status) for action in result.actions]
+        dispatched = [pair for pair in pairs if pair[0] not in issued]
+        active = [pair for pair in pairs if pair[0] in issued]
         steps.append(HourlyStep(
             at=at,
             wbgt_c=result.assessment.wbgt_c,
             level=result.assessment.level,
-            dispatched_kinds=[kind for kind in kinds if kind not in issued],
-            active_kinds=[kind for kind in kinds if kind in issued],
-            statuses=[action.status for action in result.actions],
+            dispatched_kinds=[kind for kind, _ in dispatched],
+            active_kinds=[kind for kind, _ in active],
+            statuses=[status for _, status in dispatched + active],
         ))
-        issued.update(kinds)
+        issued.update(kind for kind, _ in pairs)
 
         index = result.state.wbgt_c
         if index is None:

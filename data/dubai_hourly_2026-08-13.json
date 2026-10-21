@@ -1,0 +1,259 @@
+{
+  "meta": {
+    "source": "Open-Meteo Historical Weather API (archive-api.open-meteo.com)",
+    "source_url": "https://archive-api.open-meteo.com/v1/archive?latitude=25.2048&longitude=55.2708&start_date=2026-08-13&end_date=2026-08-13&hourly=temperature_2m,relative_humidity_2m,dew_point_2m,wind_speed_10m,shortwave_radiation,direct_radiation,diffuse_radiation&daily=sunrise,sunset&timezone=Asia/Dubai",
+    "dataset": "ECMWF ERA5 reanalysis, hourly, 10 m wind and 2 m temperature",
+    "latitude": 25.202108,
+    "longitude": 55.302376,
+    "elevation_m": 6,
+    "timezone": "Asia/Dubai",
+    "zone_id": "dubai-2026-08-13",
+    "retrieved_at": "2026-10-21T09:24:12Z",
+    "license": "Open-Meteo: CC BY 4.0; ERA5 reanalysis: Copernicus Climate Change Service",
+    "sunrise": "2026-08-13T05:51",
+    "sunset": "2026-08-13T18:55",
+    "note": "ERA5 reanalysis gridded output, not station observation; wind converted from km/h to m/s and radiation reported as W/m2. This is the hottest archived day in the ERA5 record for this location for summer 2026, with a daily maximum air temperature of 45.9 C. It is a coverage fixture for exercising the decision engine, not an external anchor: no claim about health, mortality, or intervention efficacy may be derived from it. Hours are local Asia/Dubai (UTC+04:00); site coordinates 25.202108/55.302376 are the same ERA5 grid cell as the request point in source_url."
+  },
+  "hours": [
+    {
+      "time": "2026-08-13T00:00:00+04:00",
+      "air_temp_c": 33.6,
+      "humidity_pct": 63.0,
+      "dew_point_c": 25.7,
+      "wind_ms": 0.8,
+      "global_radiation_wm2": 0.0,
+      "direct_radiation_wm2": 0.0,
+      "diffuse_radiation_wm2": 0.0
+    },
+    {
+      "time": "2026-08-13T01:00:00+04:00",
+      "air_temp_c": 32.8,
+      "humidity_pct": 65.0,
+      "dew_point_c": 25.5,
+      "wind_ms": 0.9,
+      "global_radiation_wm2": 0.0,
+      "direct_radiation_wm2": 0.0,
+      "diffuse_radiation_wm2": 0.0
+    },
+    {
+      "time": "2026-08-13T02:00:00+04:00",
+      "air_temp_c": 32.1,
+      "humidity_pct": 67.0,
+      "dew_point_c": 25.2,
+      "wind_ms": 0.8,
+      "global_radiation_wm2": 0.0,
+      "direct_radiation_wm2": 0.0,
+      "diffuse_radiation_wm2": 0.0
+    },
+    {
+      "time": "2026-08-13T03:00:00+04:00",
+      "air_temp_c": 31.5,
+      "humidity_pct": 69.0,
+      "dew_point_c": 25.2,
+      "wind_ms": 0.6,
+      "global_radiation_wm2": 0.0,
+      "direct_radiation_wm2": 0.0,
+      "diffuse_radiation_wm2": 0.0
+    },
+    {
+      "time": "2026-08-13T04:00:00+04:00",
+      "air_temp_c": 32.1,
+      "humidity_pct": 70.0,
+      "dew_point_c": 25.9,
+      "wind_ms": 1.1,
+      "global_radiation_wm2": 0.0,
+      "direct_radiation_wm2": 0.0,
+      "diffuse_radiation_wm2": 0.0
+    },
+    {
+      "time": "2026-08-13T05:00:00+04:00",
+      "air_temp_c": 31.9,
+      "humidity_pct": 66.0,
+      "dew_point_c": 24.8,
+      "wind_ms": 1.5,
+      "global_radiation_wm2": 0.0,
+      "direct_radiation_wm2": 0.0,
+      "diffuse_radiation_wm2": 0.0
+    },
+    {
+      "time": "2026-08-13T06:00:00+04:00",
+      "air_temp_c": 32.0,
+      "humidity_pct": 59.0,
+      "dew_point_c": 23.0,
+      "wind_ms": 3.4,
+      "global_radiation_wm2": 0.0,
+      "direct_radiation_wm2": 0.0,
+      "diffuse_radiation_wm2": 0.0
+    },
+    {
+      "time": "2026-08-13T07:00:00+04:00",
+      "air_temp_c": 34.0,
+      "humidity_pct": 47.0,
+      "dew_point_c": 21.2,
+      "wind_ms": 3.6,
+      "global_radiation_wm2": 64.0,
+      "direct_radiation_wm2": 18.0,
+      "diffuse_radiation_wm2": 46.0
+    },
+    {
+      "time": "2026-08-13T08:00:00+04:00",
+      "air_temp_c": 37.0,
+      "humidity_pct": 34.0,
+      "dew_point_c": 18.7,
+      "wind_ms": 3.2,
+      "global_radiation_wm2": 245.0,
+      "direct_radiation_wm2": 130.0,
+      "diffuse_radiation_wm2": 115.0
+    },
+    {
+      "time": "2026-08-13T09:00:00+04:00",
+      "air_temp_c": 40.2,
+      "humidity_pct": 27.0,
+      "dew_point_c": 17.7,
+      "wind_ms": 3.1,
+      "global_radiation_wm2": 460.0,
+      "direct_radiation_wm2": 301.0,
+      "diffuse_radiation_wm2": 159.0
+    },
+    {
+      "time": "2026-08-13T10:00:00+04:00",
+      "air_temp_c": 42.9,
+      "humidity_pct": 22.0,
+      "dew_point_c": 16.9,
+      "wind_ms": 4.0,
+      "global_radiation_wm2": 659.0,
+      "direct_radiation_wm2": 469.0,
+      "diffuse_radiation_wm2": 190.0
+    },
+    {
+      "time": "2026-08-13T11:00:00+04:00",
+      "air_temp_c": 44.9,
+      "humidity_pct": 18.0,
+      "dew_point_c": 14.8,
+      "wind_ms": 3.6,
+      "global_radiation_wm2": 812.0,
+      "direct_radiation_wm2": 602.0,
+      "diffuse_radiation_wm2": 210.0
+    },
+    {
+      "time": "2026-08-13T12:00:00+04:00",
+      "air_temp_c": 45.9,
+      "humidity_pct": 16.0,
+      "dew_point_c": 14.1,
+      "wind_ms": 2.4,
+      "global_radiation_wm2": 908.0,
+      "direct_radiation_wm2": 685.0,
+      "diffuse_radiation_wm2": 223.0
+    },
+    {
+      "time": "2026-08-13T13:00:00+04:00",
+      "air_temp_c": 44.2,
+      "humidity_pct": 24.0,
+      "dew_point_c": 19.2,
+      "wind_ms": 2.4,
+      "global_radiation_wm2": 935.0,
+      "direct_radiation_wm2": 710.0,
+      "diffuse_radiation_wm2": 225.0
+    },
+    {
+      "time": "2026-08-13T14:00:00+04:00",
+      "air_temp_c": 40.4,
+      "humidity_pct": 45.0,
+      "dew_point_c": 26.2,
+      "wind_ms": 4.8,
+      "global_radiation_wm2": 831.0,
+      "direct_radiation_wm2": 602.0,
+      "diffuse_radiation_wm2": 229.0
+    },
+    {
+      "time": "2026-08-13T15:00:00+04:00",
+      "air_temp_c": 40.4,
+      "humidity_pct": 40.0,
+      "dew_point_c": 24.1,
+      "wind_ms": 4.4,
+      "global_radiation_wm2": 738.0,
+      "direct_radiation_wm2": 522.0,
+      "diffuse_radiation_wm2": 216.0
+    },
+    {
+      "time": "2026-08-13T16:00:00+04:00",
+      "air_temp_c": 40.1,
+      "humidity_pct": 39.0,
+      "dew_point_c": 23.6,
+      "wind_ms": 4.8,
+      "global_radiation_wm2": 599.0,
+      "direct_radiation_wm2": 417.0,
+      "diffuse_radiation_wm2": 182.0
+    },
+    {
+      "time": "2026-08-13T17:00:00+04:00",
+      "air_temp_c": 39.2,
+      "humidity_pct": 43.0,
+      "dew_point_c": 24.4,
+      "wind_ms": 3.9,
+      "global_radiation_wm2": 410.0,
+      "direct_radiation_wm2": 258.0,
+      "diffuse_radiation_wm2": 152.0
+    },
+    {
+      "time": "2026-08-13T18:00:00+04:00",
+      "air_temp_c": 38.1,
+      "humidity_pct": 47.0,
+      "dew_point_c": 24.7,
+      "wind_ms": 3.4,
+      "global_radiation_wm2": 200.0,
+      "direct_radiation_wm2": 97.0,
+      "diffuse_radiation_wm2": 103.0
+    },
+    {
+      "time": "2026-08-13T19:00:00+04:00",
+      "air_temp_c": 37.1,
+      "humidity_pct": 52.0,
+      "dew_point_c": 25.6,
+      "wind_ms": 2.9,
+      "global_radiation_wm2": 38.0,
+      "direct_radiation_wm2": 8.0,
+      "diffuse_radiation_wm2": 30.0
+    },
+    {
+      "time": "2026-08-13T20:00:00+04:00",
+      "air_temp_c": 36.8,
+      "humidity_pct": 50.0,
+      "dew_point_c": 24.8,
+      "wind_ms": 2.6,
+      "global_radiation_wm2": 0.0,
+      "direct_radiation_wm2": 0.0,
+      "diffuse_radiation_wm2": 0.0
+    },
+    {
+      "time": "2026-08-13T21:00:00+04:00",
+      "air_temp_c": 36.7,
+      "humidity_pct": 47.0,
+      "dew_point_c": 23.7,
+      "wind_ms": 2.0,
+      "global_radiation_wm2": 0.0,
+      "direct_radiation_wm2": 0.0,
+      "diffuse_radiation_wm2": 0.0
+    },
+    {
+      "time": "2026-08-13T22:00:00+04:00",
+      "air_temp_c": 36.9,
+      "humidity_pct": 43.0,
+      "dew_point_c": 22.3,
+      "wind_ms": 1.0,
+      "global_radiation_wm2": 0.0,
+      "direct_radiation_wm2": 0.0,
+      "diffuse_radiation_wm2": 0.0
+    },
+    {
+      "time": "2026-08-13T23:00:00+04:00",
+      "air_temp_c": 36.0,
+      "humidity_pct": 46.0,
+      "dew_point_c": 22.7,
+      "wind_ms": 1.1,
+      "global_radiation_wm2": 0.0,
+      "direct_radiation_wm2": 0.0,
+      "diffuse_radiation_wm2": 0.0
+    }
+  ]
+}

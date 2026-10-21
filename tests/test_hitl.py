@@ -43,6 +43,8 @@ def test_request_opens_a_pending_entry_and_writes_nothing(tmp_path):
     assert pending.decided_by is None
     assert pending.decided_at is None
     assert [p.request_id for p in queue.pending()] == [pending.request_id]
+    pending.status = "approved"                       # a caller holds a copy
+    assert queue.get(pending.request_id).status == "pending"
     assert len(lines(path)) == 1
 
 
@@ -57,7 +59,14 @@ def test_approval_appends_an_executed_record_with_the_approver(tmp_path):
     assert written["status"] == "executed"
     assert written["approved_by"] == APPROVER
     assert "decision=approved" in written["reason_trace"]
+    assert f"requested_at={pending.requested_at.isoformat()}" in written["reason_trace"]
+    assert "source_action_id=act-refused-1" in written["reason_trace"]
     assert "declined_by=" not in " ".join(written["reason_trace"])
+    decided = queue.get(pending.request_id)
+    assert decided.status == "approved"
+    assert decided.decided_by == APPROVER
+    assert decided.decided_at is not None
+    assert queue.pending() == []
 
 
 def test_decline_appends_a_refused_record_with_the_decliner_in_the_trace(tmp_path):
@@ -71,6 +80,11 @@ def test_decline_appends_a_refused_record_with_the_decliner_in_the_trace(tmp_pat
     assert written["approved_by"] is None
     assert f"declined_by={APPROVER}" in written["reason_trace"]
     assert "decision=declined" in written["reason_trace"]
+    decided = queue.get(pending.request_id)
+    assert decided.status == "declined"
+    assert decided.decided_by == APPROVER
+    assert decided.decided_at is not None
+    assert queue.pending() == []
 
 
 def test_audit_holds_the_refusal_plus_the_decision(tmp_path):
@@ -86,12 +100,15 @@ def test_audit_holds_the_refusal_plus_the_decision(tmp_path):
     assert decision["status"] == "executed"
     assert decision["approved_by"] == APPROVER
     assert decision["action_id"] != original["action_id"]
+    assert "source_action_id=act-refused-1" in decision["reason_trace"]
 
 
 def test_decide_rejects_a_second_decision_and_a_blank_approver(tmp_path):
     queue, path = queue_with_logged_refusal(tmp_path)
     pending = queue.request(refused_action(), ZONE)
     queue.decide(pending.request_id, APPROVER, approve=True)
+    handed_out = queue.get(pending.request_id)
+    handed_out.status = "pending"                    # a caller cannot reopen it
     with pytest.raises(ValueError):
         queue.decide(pending.request_id, APPROVER, approve=True)
     blank = queue.request(refused_action(), ZONE)

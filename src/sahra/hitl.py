@@ -45,11 +45,11 @@ class ApprovalQueue:
         )
         self._requests[pending.request_id] = pending
         self._origins[pending.request_id] = action
-        return pending
+        return pending.model_copy(deep=True)
 
     def decide(self, request_id: str, approver: str, approve: bool) -> ActionRecord:
         """Append the decision as a new audit record and close the request."""
-        pending = self.get(request_id)
+        pending = self._require(request_id)
         if pending.status != "pending":
             raise ValueError(f"request already decided: {request_id}")
         if not (approver or "").strip():
@@ -78,9 +78,14 @@ class ApprovalQueue:
 
     def pending(self) -> list[PendingApproval]:
         """Requests still awaiting a decision, in the order they were opened."""
-        return [r for r in self._requests.values() if r.status == "pending"]
+        return [r.model_copy(deep=True)
+                for r in self._requests.values() if r.status == "pending"]
 
     def get(self, request_id: str) -> PendingApproval:
+        """A copy of the request: callers cannot mutate the queue's own state."""
+        return self._require(request_id).model_copy(deep=True)
+
+    def _require(self, request_id: str) -> PendingApproval:
         try:
             return self._requests[request_id]
         except KeyError:

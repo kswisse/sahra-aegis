@@ -46,13 +46,15 @@ def globe_temp_c(
     """Black-globe temperature, Dimiceli et al. (2011, 2013), in the form the US
     National Weather Service runs operationally:
     Tg = (B + C*Ta + 7680000) / (C + 256000), with the NWS daytime convective
-    coefficient and wind floored at 1 m/s."""
+    coefficient and wind floored at 1 m/s. A negative irradiance is a data
+    error, not a cooling effect, so it is clamped to 0."""
     u = max(wind_ms, 1.0)
+    solar = max(solar_wm2, 0.0)
     f_dir = min(max(direct_fraction, 0.0), 1.0)
     f_dif = 1.0 - f_dir
     emissivity = 0.575 * _saturation_vapour_pressure_hpa(air_temp_c) ** (1.0 / 7.0)
     b = (
-        solar_wm2 * (f_dir / (4.0 * _SIGMA * max(cos_zenith, 0.05)) + 1.2 * f_dif / _SIGMA)
+        solar * (f_dir / (4.0 * _SIGMA * max(cos_zenith, 0.05)) + 1.2 * f_dif / _SIGMA)
         + emissivity * air_temp_c ** 4
     )
     c = _H_CONVECTIVE * (u * 3600.0) ** 0.58 / 5.3865e-8

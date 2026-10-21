@@ -23,9 +23,13 @@ LST = {"school-dxb-001": 48.2, "site-dxb-014": 51.0}
 def _verify(result) -> str:
     executed = sum(1 for a in result.actions if a.status == "executed")
     refused = sum(1 for a in result.actions if a.status == "refused")
-    clause = f"{refused} refused pending human approval; " if refused else "all approved; "
-    return (f"verify: {len(result.actions)} actions decided, {executed} executed, "
-            f"{clause}"
+    total = len(result.actions)
+    counts = f"{executed} actions executed"
+    if refused:
+        counts += f", {refused} refused pending human approval"
+    if executed + refused != total:
+        counts += f", {total - executed - refused} in an unaccounted status"
+    return (f"verify: {total} actions decided, {counts}; "
             f"claim limited to decision latency and action uptake, not health outcome")
 
 

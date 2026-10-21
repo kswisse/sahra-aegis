@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -45,7 +46,7 @@ class HeatState(BaseModel):
     humidity_pct: float = Field(ge=0, le=100)
     wbgt_c: float | None = None
     lst_c: float | None = None
-    source_tier: str
+    source_tier: Literal["site", "weather-outdoor", "weather"]
 
 
 class RiskAssessment(BaseModel):
@@ -67,7 +68,7 @@ class Intervention(BaseModel):
 class ActionRecord(BaseModel):
     action_id: str
     intervention: Intervention
-    status: str
+    status: Literal["executed", "refused"]
     at: datetime
     approved_by: str | None = None
     reason_trace: list[str]

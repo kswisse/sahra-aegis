@@ -63,6 +63,10 @@ def test_the_day_demo_runs_the_extreme_day_offline_and_leaves_no_trace(tmp_path,
     assert "escalate -> refused" in out
     assert f"APPROVED by {APPROVER}" in out
     assert "escalate -> executed" in out
+    assert "one open request per zone and kind" in out
+    assert "first raised at 11:00, last refreshed to WBGT 34.5 C (extreme) at 14:00" in out
+    assert out.count("last refreshed to WBGT") == 1
+    assert out.count("-> APPROVED by") == 1
     assert "ECMWF ERA5 reanalysis" in out
     assert "archive-api.open-meteo.com" in out
 

@@ -15,6 +15,8 @@ class PendingApproval(BaseModel):
     intervention: Intervention
     requested_at: datetime
     reason_trace: list[str]
+    severity: float | None = None
+    refreshed_at: datetime | None = None
     status: str = "pending"
     decided_by: str | None = None
     decided_at: datetime | None = None
@@ -26,6 +28,11 @@ class ApprovalQueue:
     A refused consequential action becomes a pending request; the coordinator's
     decision is appended to the append-only audit as a new record. The original
     refusal is never rewritten.
+
+    The queue holds at most one open request per (zone, intervention kind), so a
+    hazard that persists for hours does not flood it. Every hour is still
+    refused and still written to the audit; only the queue is deduped, and an
+    open request is refreshed in place to the worst reading it has seen.
     """
 
     def __init__(self, audit: AuditLog):
@@ -33,14 +40,33 @@ class ApprovalQueue:
         self._requests: dict[str, PendingApproval] = {}
         self._origins: dict[str, ActionRecord] = {}
 
-    def request(self, action: ActionRecord, zone_id: str) -> PendingApproval:
-        """Open a pending request for an already-refused action. Writes nothing."""
+    def request(self, action: ActionRecord, zone_id: str,
+                severity: float | None = None) -> PendingApproval:
+        """Open a pending request for an already-refused action. Writes nothing.
+
+        If an open request already covers this zone and kind, it is refreshed
+        to the newer refusal when `severity` is higher (or was unset), and the
+        same request_id is returned. A decision closes the window: the next
+        refusal of that kind opens a new request.
+        """
+        for existing in self._requests.values():
+            if (existing.status == "pending" and existing.zone_id == zone_id
+                    and existing.intervention.kind == action.intervention.kind):
+                if severity is not None and (existing.severity is None
+                                             or severity > existing.severity):
+                    existing.intervention = action.intervention
+                    existing.reason_trace = list(action.reason_trace)
+                    existing.severity = severity
+                    existing.refreshed_at = datetime.now(timezone.utc)
+                    self._origins[existing.request_id] = action
+                return existing.model_copy(deep=True)
         pending = PendingApproval(
             request_id=uuid4().hex[:12],
             zone_id=zone_id,
             intervention=action.intervention,
             requested_at=datetime.now(timezone.utc),
             reason_trace=list(action.reason_trace),
+            severity=severity,
             status="pending",
         )
         self._requests[pending.request_id] = pending

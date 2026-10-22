@@ -43,6 +43,8 @@ def run_cycle(
             f"expected_risk_reduction={intervention.expected_risk_reduction}",
             f"zone={zone_id}",
         ]
+        if state.disagreement:
+            trace.append(f"disagreement={state.disagreement}")
         try:
             gate.authorize(intervention, approved_by)
             status, approver = "executed", approved_by

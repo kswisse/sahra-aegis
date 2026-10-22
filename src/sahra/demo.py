@@ -15,9 +15,14 @@ AT = datetime(2027, 7, 14, 13, 0, tzinfo=timezone.utc)
 
 WEATHER = {"school-dxb-001": {"air_temp_c": 44.0, "humidity_pct": 70.0},
            "site-dxb-014": {"air_temp_c": 45.0, "humidity_pct": 10.0,
-                            "solar_wm2": 1000.0, "wind_ms": 1.0, "cos_zenith": 0.95}}
-SITES = {"school-dxb-001": {"wbgt_c": 33.5}}  # site-dxb-014 has no sensor: it runs on the weather-outdoor tier
-LST = {"school-dxb-001": 48.2, "site-dxb-014": 51.0}
+                            "solar_wm2": 1000.0, "wind_ms": 1.0, "cos_zenith": 0.95},
+           # shaded courtyard sensor at 29.0 C under an open-sky grid of 39 C:
+           # solar and wind derive 31.1 C, so the tiers disagree by 2.1 C
+           "school-dxb-003": {"air_temp_c": 39.0, "humidity_pct": 35.0,
+                              "solar_wm2": 500.0, "wind_ms": 3.5, "cos_zenith": 0.90}}
+SITES = {"school-dxb-001": {"wbgt_c": 33.5},
+         "school-dxb-003": {"wbgt_c": 29.0}}  # site-dxb-014 has no sensor: it runs on the weather-outdoor tier
+LST = {"school-dxb-001": 48.2, "site-dxb-014": 51.0, "school-dxb-003": 57.0}
 
 
 def _verify(result) -> str:
@@ -42,7 +47,8 @@ def run_demo(tmp_dir: str | Path | None = None, approved_by: str | None = None) 
 
     chunks = ["SAHRA live demonstration - Dubai, 14 July 2027, 13:00 local"]
     for zone_id, group in (("school-dxb-001", PopulationGroup.SCHOOL),
-                           ("site-dxb-014", PopulationGroup.OUTDOOR_WORKER)):
+                           ("site-dxb-014", PopulationGroup.OUTDOOR_WORKER),
+                           ("school-dxb-003", PopulationGroup.SCHOOL)):
         result = run_cycle(
             zone_id=zone_id, group=group, at=AT,
             satellite=sat.lst_for(zone_id), weather=wx.sample(zone_id, AT),

@@ -125,3 +125,60 @@ def test_unknown_request_id_raises_key_error(tmp_path):
     with pytest.raises(KeyError):
         queue.decide("does-not-exist", APPROVER, approve=True)
     assert len(lines(path)) == 1
+
+
+
+def refused(action_id: str, kind=InterventionKind.ESCALATE, wbgt: str = "33.5"):
+    return ActionRecord(
+        action_id=action_id,
+        intervention=Intervention(kind=kind, reason=f"wbgt {wbgt} >= 32 extreme",
+                                  expected_risk_reduction=0.4, consequential=True),
+        status="refused", at=AT, approved_by=None,
+        reason_trace=["tier=weather-outdoor", f"wbgt={wbgt}", "level=extreme"],
+    )
+
+
+def test_two_refusals_of_the_same_kind_share_one_open_request():
+    queue = ApprovalQueue(AuditLog("unused.jsonl"))
+    first = queue.request(refused("act-1", wbgt="33.5"), ZONE, severity=33.5)
+    second = queue.request(refused("act-2", wbgt="34.5"), ZONE, severity=34.5)
+
+    assert second.request_id == first.request_id
+    assert second.severity == 34.5
+    assert second.requested_at == first.requested_at
+    assert second.refreshed_at is not None
+    assert second.reason_trace == ["tier=weather-outdoor", "wbgt=34.5", "level=extreme"]
+    assert [p.request_id for p in queue.pending()] == [first.request_id]
+    assert queue._origins[first.request_id].action_id == "act-2"
+
+
+def test_a_lower_reading_does_not_refresh_an_open_request():
+    queue = ApprovalQueue(AuditLog("unused.jsonl"))
+    first = queue.request(refused("act-1", wbgt="34.5"), ZONE, severity=34.5)
+    second = queue.request(refused("act-2", wbgt="33.5"), ZONE, severity=33.5)
+
+    assert second.request_id == first.request_id
+    assert second.severity == 34.5
+    assert second.refreshed_at is None
+    assert queue._origins[first.request_id].action_id == "act-1"
+
+
+def test_a_different_kind_opens_its_own_request():
+    queue = ApprovalQueue(AuditLog("unused.jsonl"))
+    escalate = queue.request(refused("act-1"), ZONE, severity=33.5)
+    cooling = queue.request(refused("act-2", kind=InterventionKind.ACTIVATE_COOLING),
+                            ZONE, severity=33.5)
+
+    assert cooling.request_id != escalate.request_id
+    assert len(queue.pending()) == 2
+
+
+def test_after_a_decision_the_same_kind_opens_a_new_request(tmp_path):
+    queue = ApprovalQueue(AuditLog(tmp_path / "audit.jsonl"))
+    first = queue.request(refused("act-1"), ZONE, severity=33.5)
+    queue.decide(first.request_id, APPROVER, approve=True)
+
+    later = queue.request(refused("act-2", wbgt="34.5"), ZONE, severity=34.5)
+    assert later.request_id != first.request_id
+    assert queue.get(first.request_id).status == "approved"
+    assert [p.request_id for p in queue.pending()] == [later.request_id]

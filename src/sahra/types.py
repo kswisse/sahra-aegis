@@ -47,6 +47,7 @@ class HeatState(BaseModel):
     wbgt_c: float | None = Field(default=None, ge=-20, le=70)
     lst_c: float | None = Field(default=None, ge=-20, le=90)
     source_tier: Literal["site", "weather-outdoor", "weather"]
+    disagreement: str | None = None
 
 
 class RiskAssessment(BaseModel):

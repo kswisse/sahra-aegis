@@ -64,7 +64,22 @@ in the header.
 `src/sahra/hitl.py` is where the human decision lives. A consequential
 intervention refused for want of an approver is opened as a pending request;
 the coordinator's decision is appended to the same append-only audit as a new
-record, and the original refusal is never rewritten. `ActionRecord.status` is
+record, and the original refusal is never rewritten.
+
+The queue holds one open request per `(zone, kind)`. A hazard that persists for
+hours is still refused and still audited every hour, but the open request is
+refreshed in place to the worst reading it saw, so the coordinator sees one
+escalation with the current evidence instead of one duplicate per hour; after a
+decision, the next refusal of that kind opens a new request.
+
+Source disagreement is resolved in the open, too: when the site sensor and the
+weather tier both yield an index more than 1 C apart, `fusion.py` takes the
+higher (conservative) one, records which tier supplied it, and writes both
+readings into the decision's `reason_trace`. A satellite land-surface
+temperature implausibly far above the air reading is labelled advisory only and
+never drives the decision.
+
+`ActionRecord.status` is
 narrowed to `executed | refused` — the only two outcomes the orchestrator and
 the queue produce — so an unexpected outcome fails loudly instead of quietly
 changing what the verification line means.
@@ -83,7 +98,7 @@ PyPI, for pydantic and pytest.
 ## Run
 
 ```bash
-.venv/Scripts/python -m pytest -q            # 94 tests
+.venv/Scripts/python -m pytest -q            # 114 tests
 .venv/Scripts/python scripts/demo_day.py     # one archived day, hour by hour
 .venv/Scripts/python -m sahra.demo           # end-to-end cycle, offline
 .venv/Scripts/python -m sahra.replay         # 6-day Dubai replay + validation claims

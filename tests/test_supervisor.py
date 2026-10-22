@@ -202,3 +202,26 @@ def test_the_day_runs_offline(tmp_path, monkeypatch):
     timeline, _ = run_archived_day(tmp_path)
     assert len(timeline.steps) == 24
     assert timeline.peak_at == datetime.fromisoformat("2026-07-01T11:00:00+04:00")
+
+
+def test_a_persisted_hazard_keeps_one_open_request_refreshed_to_the_peak(tmp_path):
+    fixture = Path(__file__).resolve().parents[1] / "data" / "dubai_hourly_2026-08-13.json"
+    audit = AuditLog(tmp_path / "audit.jsonl")
+    queue = ApprovalQueue(audit)
+    timeline = run_day("dubai-2026-08-13", PopulationGroup.SCHOOL, fixture,
+                       ApprovalGate(), audit, queue)
+
+    refusals = [record for record in audit.read_all() if record.status == "refused"]
+    assert len(refusals) == 8
+    assert len(timeline.pending_ids) == 1
+    pending = queue.get(timeline.pending_ids[0])
+    assert pending.intervention.kind is InterventionKind.ESCALATE
+    assert pending.severity == pytest.approx(34.5)
+    assert pending.refreshed_at is not None
+    assert pending.requested_at <= pending.refreshed_at
+    assert timeline.peak_wbgt_c == pytest.approx(34.5)
+    assert timeline.peak_at == datetime.fromisoformat("2026-08-13T14:00:00+04:00")
+
+    record = queue.decide(pending.request_id, APPROVER, approve=True)
+    assert record.status == "executed"
+    assert len(audit.read_all()) == 69

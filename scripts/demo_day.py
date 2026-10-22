@@ -4,9 +4,10 @@ Offline and deterministic: the committed fixture fixes the day, and the
 decision path is a typed state machine - no LLM and no network take part.
 
 The default fixture is the extreme day, so the consequential path really runs:
-the gate refuses the escalation for want of an approver, the refusal is
-opened as a pending request, and the coordinator's approval is appended to
-the same audit. The milder day is available behind --fixture and says so.
+the gate refuses the escalation for want of an approver every hour the hazard
+holds, the queue keeps one open request per zone and kind and refreshes it to
+the worst reading, and the coordinator's approval is appended to the same
+audit. The milder day is available behind --fixture and says so.
 """
 
 import argparse
@@ -115,16 +116,37 @@ def _escalation(timeline, queue: ApprovalQueue, records: list, approver: str) ->
     lines += _paragraph(
         f"The extreme band opened at {refusals[0].at.strftime('%H:%M')} local. ESCALATE is a "
         "consequential intervention, so with no approver on duty the approval gate REFUSED it - "
-        "it was never silently downgraded. Every refusal was opened as a pending request, in "
-        "the order it happened:")
+        "it was never silently downgraded. Every hour the hazard held was refused and written "
+        "to the audit:")
+    lines += ["", f"    {'hour':<7}{'wbgt':<7}band"]
+    for refusal in refusals:
+        lines.append(f"    {refusal.at.strftime('%H:%M'):<7}"
+                     f"{_trace_value(refusal, 'wbgt'):<7}{_trace_value(refusal, 'level')}")
+
+    peak_refusal = _peak_refusal(refusals, timeline.peak_at)
+    pending = next((p for p in pendings if p.severity == timeline.peak_wbgt_c), pendings[0])
+    at_peak = pending.severity is not None and pending.severity == timeline.peak_wbgt_c
+    if at_peak:
+        worst_at = peak_refusal.at
+        worst_band = _peak_step(timeline).level.value
+    else:
+        worst_at = next(
+            (r.at for r in reversed(refusals)
+             if pending.severity is not None
+             and _trace_value(r, "wbgt") == f"{pending.severity:.1f}"),
+            refusals[-1].at)
+        worst_band = next(
+            (_trace_value(r, "level") for r in reversed(refusals) if r.at == worst_at), "?")
     lines += [
         "",
-        f"  {'request':<14}{'kind':<10}{'hour':<7}{'wbgt':<7}{'band':<9}status",
+        f"  one open request per zone and kind: {pending.request_id} "
+        f"(kind {pending.intervention.kind.value})",
+        f"  first raised at {refusals[0].at.strftime('%H:%M')}, last refreshed to WBGT "
+        f"{pending.severity} C ({worst_band}) at {worst_at.strftime('%H:%M')}",
     ]
-    for refusal, pending in zip(refusals, pendings):
-        lines.append(f"  {pending.request_id:<14}{pending.intervention.kind.value:<10}"
-                     f"{refusal.at.strftime('%H:%M'):<7}{_trace_value(refusal, 'wbgt'):<7}"
-                     f"{_trace_value(refusal, 'level'):<9}{pending.status}")
+    lines += _paragraph(
+        "The same open request is refreshed to the worst reading it saw while the hazard "
+        "held; the hourly refusals above still stand in the audit, one per hour.", "  ")
 
     first = refusals[0]
     lines += [
@@ -135,18 +157,20 @@ def _escalation(timeline, queue: ApprovalQueue, records: list, approver: str) ->
         f"      reason: {'; '.join(first.reason_trace)}",
     ]
 
-    peak_refusal = _peak_refusal(refusals, timeline.peak_at)
-    pending = pendings[refusals.index(peak_refusal)]
     decision = queue.decide(pending.request_id, approver, approve=True)
+    if at_peak:
+        heading = (f"Coordinator decision on the peak-hour escalation "
+                   f"({peak_refusal.at.strftime('%H:%M')}, WBGT {timeline.peak_wbgt_c} C):")
+    else:
+        heading = f"Coordinator decision on the escalation (WBGT {pending.severity} C):"
     lines += [
         "",
-        f"Coordinator decision on the peak-hour escalation "
-        f"({peak_refusal.at.strftime('%H:%M')}, WBGT {timeline.peak_wbgt_c} C):",
+        heading,
         f"  request {pending.request_id} -> APPROVED by {approver}",
         f"  audit record appended: [{decision.action_id}] "
         f"{decision.intervention.kind.value} -> {decision.status} "
         f"(approved_by={decision.approved_by})",
-        "  the refusal above is still in the audit, unchanged; the decision is a new record",
+        "  the refusals above are still in the audit, unchanged; the decision is a new record",
         "  (stamped with the time of this run, not the archived hour)",
     ]
     return lines

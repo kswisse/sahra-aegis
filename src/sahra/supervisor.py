@@ -10,7 +10,10 @@ timeline at the hour the planner stops proposing it, because the band moved.
 
 A consequential action refused for want of an approver is opened as a pending
 request when an approval queue is supplied; the refusal itself stays in the
-audit exactly as it was written. Each step keeps its actions as (kind, status)
+audit exactly as it was written. The queue holds one open request per (zone,
+kind) refreshed to the worst reading, so a hazard that persists all afternoon
+does not produce one duplicate request per hour - but every hour is still
+refused and still audited. Each step keeps its actions as (kind, status)
 pairs, so a kind and its outcome can never drift apart. No LLM and no network
 take part.
 """
@@ -72,7 +75,11 @@ def run_day(
     audit: AuditLog,
     queue: ApprovalQueue | None = None,
 ) -> DayTimeline:
-    """Run one cycle per hour over the fixture's hours, in order."""
+    """Run one cycle per hour over the fixture's hours, in order.
+
+    Every refusal is audited; the queue, if supplied, keeps at most one open
+    request per (zone, kind) and refreshes it to the worst severity seen.
+    """
     try:
         provider = HourlyWeatherProvider(fixture_path)
         hours = provider.hours(zone_id)
@@ -116,7 +123,10 @@ def run_day(
         if queue is not None:
             for action in result.actions:
                 if action.status == "refused" and action.intervention.consequential:
-                    pending_ids.append(queue.request(action, zone_id).request_id)
+                    request_id = queue.request(
+                        action, zone_id, severity=result.assessment.wbgt_c).request_id
+                    if request_id not in pending_ids:
+                        pending_ids.append(request_id)
 
     return DayTimeline(
         zone_id=zone_id,

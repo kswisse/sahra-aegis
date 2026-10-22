@@ -40,12 +40,14 @@ queue** is where a refusal waits for a human.
 
 `src/sahra/supervisor.py` runs one control cycle per hour over a committed
 archived day and returns a `DayTimeline`: 24 `HourlyStep`s, each carrying the
-WBGT, the band, the kinds dispatched that hour, the kinds still in force from
-earlier in the day, and the status of each. A day reads as a rising curve
-rather than 24 repetitions of the same advisory — a kind dispatched at 09:00
-and still in force at 14:00 is listed under `active_kinds`, not re-listed as a
-new dispatch. Every action of every hour is appended to the audit; nothing is
-filtered.
+WBGT, the band, the kinds dispatched for the first time that day, the kinds
+dispatched earlier today that the planner proposed again in this same hour, and
+the status of each. A day reads as a rising curve rather than 24 repetitions of
+the same advisory — a kind dispatched at 09:00 and proposed again at 14:00 is
+listed under `active_kinds`, not re-listed as a new dispatch. `active_kinds`
+is a display rule, not a deactivation: a kind leaves the timeline at the hour
+the planner stops proposing it, because the band moved. Every action of every
+hour is appended to the audit; nothing is filtered.
 
 ```bash
 .venv/Scripts/python scripts/demo_day.py                                   # the extreme day
@@ -110,8 +112,11 @@ never about health.
 `python -m sahra.replay` replays real archived Dubai weather from committed
 fixtures (`data/dubai_replay.json`) and prints five claims:
 
-1. **External anchor** — the 2026-07-01 engine output falls inside the MOHRE
-   statutory midday-ban window (published regulation).
+1. **External anchor** — the 13:00 row `dubai-2026-07-01-mohre` in
+   `data/dubai_replay.json` falls inside the MOHRE statutory midday-ban
+   window (published regulation). That is the replay fixture's midday row, not
+   the hourly fixture `data/dubai_hourly_2026-07-01.json`, which is a coverage
+   input that never escalates.
 2. **External anchor** — official NCM station records (51.6 / 46.6 / 50.0 °C)
    asserted as an upper bound the reanalysis cannot exceed.
 3. **Screening ceiling** — ISO 7243 outdoor WBGT ≥ no-solar fallback on the

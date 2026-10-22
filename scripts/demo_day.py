@@ -29,7 +29,6 @@ DEFAULT_FIXTURE = ROOT / "data" / "dubai_hourly_2026-08-13.json"
 DEFAULT_AUDIT = ROOT / "sahra-demo-out" / "demo-day-audit.jsonl"
 DEFAULT_APPROVER = "coordinator@dxbops"
 TAIL_RECORDS = 8
-EXTREME_WBGT_C = 32.0
 
 
 def _paragraph(text: str, indent: str = "") -> list[str]:
@@ -87,6 +86,9 @@ def _table(timeline, air_temps: dict[str, float]) -> list[str]:
         air = air_temps.get(step.at.isoformat(), float("nan"))
         lines.append(f"  {step.at.strftime('%H:%M'):<6}{air:6.1f}{step.wbgt_c:7.1f}  "
                      f"{step.level.value:<9}{dispatch:<32}{status}")
+    lines += _paragraph(
+        "legend: dispatch = kinds first dispatched today; '-' = none new this hour. "
+        "status = every kind the planner proposed this hour, with its outcome.", "  ")
     return lines
 
 
@@ -99,10 +101,10 @@ def _escalation(timeline, queue: ApprovalQueue, records: list, approver: str) ->
     if not refusals:
         lines += _paragraph(
             f"No escalation was raised on this day: the peak was {timeline.peak_wbgt_c} C "
-            f"({_peak_step(timeline).level.value}), below the {EXTREME_WBGT_C:g} C extreme "
-            "threshold, so the consequential path never opened and nothing was waiting for "
-            "approval. The day is still a full 24-hour run: advisory, activity shift and "
-            "cooling were dispatched and executed as the band rose and fell.")
+            f"({_peak_step(timeline).level.value}), below the extreme threshold, so the "
+            "consequential path never opened and nothing was waiting for approval. The day "
+            "is still a full 24-hour run: advisory, activity shift and cooling were "
+            "dispatched and executed as the band rose and fell.")
         return lines
 
     lines += _paragraph(

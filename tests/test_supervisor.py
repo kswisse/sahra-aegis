@@ -26,9 +26,9 @@ def run_archived_day(tmp_path, queue=None):
 def write_extreme_fixture(path):
     """A synthetic three-hour day whose midday hour bands extreme.
 
-    The archived ERA5 day peaks at 31.4 C and never reaches the 32 C extreme
-    band, so the escalation path needs its own fixture to be exercised at all.
-    Every row here is a test vector, not observed weather.
+    A controlled vector for the refusal -> pending request -> approval path:
+    three hours, one band change, and no dependence on which archived days
+    happen to escalate. Every row here is a test vector, not observed weather.
     """
     def hour(h, air, solar, direct):
         return {

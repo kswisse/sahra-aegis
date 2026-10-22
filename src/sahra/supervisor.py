@@ -2,9 +2,11 @@
 
 The audit stays the complete record — every action the engine took is appended
 and nothing is filtered. The timeline is where readability lives: a kind
-dispatched earlier in the day and still in force is listed under `active_kinds`
-instead of being re-listed as a new dispatch, so a day reads as a rising curve
-rather than 24 repetitions of the same advisory.
+dispatched earlier in the day and proposed again in this same hour is listed
+under `active_kinds` instead of being re-listed as a new dispatch, so a day
+reads as a rising curve rather than 24 repetitions of the same advisory.
+`active_kinds` is a display rule, not a deactivation: a kind leaves the
+timeline at the hour the planner stops proposing it, because the band moved.
 
 A consequential action refused for want of an approver is opened as a pending
 request when an approval queue is supplied; the refusal itself stays in the
@@ -30,9 +32,12 @@ class HourlyStep(BaseModel):
     """One hour of the day, as the supervisor reads it.
 
     `dispatched_kinds` are the kinds this hour put on the table for the first
-    time today; `active_kinds` are the kinds already in force from earlier in
-    the day. `statuses[i]` is the outcome of `(dispatched_kinds +
-    active_kinds)[i]`, so the two kind lists and the statuses always pair up.
+    time today; `active_kinds` are the kinds dispatched earlier today that the
+    planner proposed again in this same hour. `statuses[i]` is the outcome of
+    `(dispatched_kinds + active_kinds)[i]`, so the two kind lists and the
+    statuses always pair up. `active_kinds` is a display rule, not a
+    deactivation: a kind leaves the timeline at the hour the planner stops
+    proposing it, because the band moved.
     """
 
     at: datetime

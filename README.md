@@ -114,21 +114,23 @@ fixtures (`data/dubai_replay.json`) and prints five claims:
 
 1. **External anchor** — the 13:00 row `dubai-2026-07-01-mohre` in
    `data/dubai_replay.json` falls inside the MOHRE statutory midday-ban
-   window (published regulation). That is the replay fixture's midday row, not
-   the hourly fixture `data/dubai_hourly_2026-07-01.json`, which is a coverage
-   input that never escalates.
-2. **External anchor** — official NCM station records (51.6 / 46.6 / 50.0 °C)
-   asserted as an upper bound the reanalysis cannot exceed.
-3. **Screening ceiling** — ISO 7243 outdoor WBGT ≥ no-solar fallback on the
-   solar day (formula-internal, regression guard).
-4. **Screening ceiling** — both forms band identically at the threshold
-   (regression guard).
-5. **Record-day refutation** — the 51.6 °C record-air-temp day bands *moderate*
-   at 5 % RH while a 44.4 °C grid day bands *extreme*: record air temperature is
-   not a heat-stress label.
+   window (published regulation) and bands HIGH or worse. That is the replay
+   fixture's midday row, not the hourly fixture
+   `data/dubai_hourly_2026-07-01.json`, which is a coverage input that never
+   escalates.
+2. **Formula-internal** — the mild off-season control bands LOW.
+3. **Formula-internal** — ISO 7243 outdoor WBGT ≥ no-solar fallback on every
+   day (regression guard).
+4. **Formula-internal** — a hotter but drier day bands lower than a cooler but
+   more humid one: the 51.6 °C record-air-temp day bands *moderate* at 5 % RH
+   while a 44.4 °C grid day bands *extreme*. Record air temperature is not a
+   heat-stress label.
+5. **External anchor** — official NCM station records (51.6 / 46.6 / 50.0 °C)
+   sit above the reanalysis grid samples for the same days, asserted as an
+   upper bound the reanalysis cannot exceed.
 
-Claims 1–2 are externally dated; claims 3–4 are formula-internal and framed as
-what they are — screening/regression checks, not outcome labels. Validation
+Claims 1 and 5 are externally dated; claims 2–4 are formula-internal and framed
+as what they are — screening/regression checks, not outcome labels. Validation
 runs survive `python -O` (assertions are explicit raises; "OK" is earned, not
 printed for free).
 

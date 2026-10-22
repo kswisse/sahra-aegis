@@ -1,6 +1,6 @@
 # SAHRA — Create AI Agents Championship submission checklist
 
-Status: engine complete @ `ff30f31` (main, 99 tests, offline demo + replay).
+Status: engine complete @ `f7006d9` (main, 114 tests, offline demo + replay).
 Checked against verified competition facts as of 2026-10-20. `UNKNOWN` items
 need a source before they gate anything — do not act on guesses.
 
@@ -30,7 +30,7 @@ need a source before they gate anything — do not act on guesses.
 
 Engine:
 - [x] Deterministic 5-agent cycle, human-in-the-loop gate, append-only audit —
-      all reviewed + tested (99 passing).
+      all reviewed + tested (114 passing).
 - [x] Offline demo: `.venv/Scripts/python -m sahra.demo`
 - [x] Validation replay with external anchors (MOHRE window, NCM records):
       `python -m sahra.replay` — survives `python -O`.

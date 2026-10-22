@@ -9,6 +9,8 @@ import subprocess
 import tomllib
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "bootstrap.py"
 
@@ -36,3 +38,18 @@ def test_the_repo_package_list_is_discoverable():
     packages = module.project_packages()
     assert packages == declared["project"]["dependencies"]
     assert any(p.startswith("pydantic") for p in packages)
+
+
+def test_help_exits_zero_without_installing_anything(monkeypatch):
+    module = load_bootstrap()
+    calls = []
+
+    def record(*args, **kwargs):
+        calls.append(args)
+        raise AssertionError("--help must not run an install")
+
+    monkeypatch.setattr(module, "run", record)
+    with pytest.raises(SystemExit) as exit_info:
+        module.main(["--help"])
+    assert exit_info.value.code == 0
+    assert calls == []

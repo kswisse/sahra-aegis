@@ -5,6 +5,7 @@ touches is PyPI, for the project's declared dependencies and for pytest.
 Importing this module does nothing: every side effect lives in main().
 """
 
+import argparse
 import os
 import subprocess
 import sys
@@ -45,8 +46,12 @@ def run(command: list[str]) -> tuple[int, str]:
     return done.returncode, (lines[-1] if lines else "")
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     """Create the venv if it is missing, install the project, run the tests."""
+    parser = argparse.ArgumentParser(
+        description="One-command setup: virtual environment, install, test suite.")
+    parser.parse_args(argv)
+
     packages = project_packages()
     print(f"SAHRA bootstrap - repo root {ROOT}")
     print(f"declared dependencies: {', '.join(packages)} (+ {TEST_RUNNER} to run the suite)")

@@ -6,7 +6,9 @@ ponytail: the live archive fetch is not wired; re-fetch only when the fixture
 rows age out, replacing the committed file behind load_fixtures.
 """
 
+import argparse
 import json
+import sys
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -16,6 +18,10 @@ from .risk import approx_wbgt_c, assess, wbgt_outdoor_c
 from .types import HeatState, PopulationGroup, RiskLevel
 
 FIXTURE = Path(__file__).resolve().parents[2] / "data" / "dubai_replay.json"
+
+# RiskLevel is a str enum, so `<` / `>=` fall through to str ordering, which is
+# alphabetical and has nothing to do with severity. Rank through this tuple.
+_BAND_ORDER = (RiskLevel.LOW, RiskLevel.MODERATE, RiskLevel.HIGH, RiskLevel.EXTREME)
 
 
 def _require(condition: object, msg: str) -> None:
@@ -61,6 +67,11 @@ def band(day: ReplayDay) -> RiskLevel:
     return assess(state, PopulationGroup.OUTDOOR_WORKER).level
 
 
+def severity(level: RiskLevel) -> int:
+    """Position of a band in severity order (LOW=0 .. EXTREME=3)."""
+    return _BAND_ORDER.index(level)
+
+
 def render_table(days: Sequence[ReplayDay]) -> str:
     lines = [f"{'day':<34}{'Ta':>6}{'outdoor':>9}{'fallback':>10}{'gap':>6}  band"]
     for d in days:
@@ -77,7 +88,7 @@ def validate(days: Sequence[ReplayDay]) -> list[str]:
     mohre = [d for d in days if "mohre" in d.id]
     _require(mohre, "no MOHRE-window sample in the fixture")
     for d in mohre:
-        _require(band(d) >= RiskLevel.HIGH, d.id)
+        _require(band(d) in (RiskLevel.HIGH, RiskLevel.EXTREME), d.id)
     claims.append(f"{len(mohre)} midday sample inside the MOHRE ban window bands HIGH or worse")
 
     controls = [d for d in days if "control" in d.id]
@@ -95,6 +106,8 @@ def validate(days: Sequence[ReplayDay]) -> list[str]:
     _require(sweihan.air_temp_c > humid.air_temp_c, "reanalysis order inverted")
     _require(sweihan.outdoor_wbgt_c() < humid.outdoor_wbgt_c(),
              "a hotter but drier day does not band lower")
+    _require(severity(band(sweihan)) < severity(band(humid)),
+             "a hotter but drier day does not band lower")
     claims.append("a hotter but drier day bands lower than a cooler but more humid one")
 
     records = [d for d in days if d.record_air_temp_c is not None]
@@ -105,8 +118,30 @@ def validate(days: Sequence[ReplayDay]) -> list[str]:
     return claims
 
 
-if __name__ == "__main__":  # pragma: no cover
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        prog="python -m sahra.replay",
+        description="Replay committed Dubai weather through the risk engine.")
+    parser.add_argument("--validate", action="store_true",
+                        help="validate only; exit non-zero if a claim fails")
+    args = parser.parse_args(argv)
+
     replayed = load_fixtures()
-    print(render_table(replayed))
-    for claim in validate(replayed):
+    if not args.validate:
+        print(render_table(replayed))
+        for claim in validate(replayed):
+            print(f"OK  {claim}")
+        return 0
+
+    try:
+        claims = validate(replayed)
+    except AssertionError as exc:
+        print(f"FAIL  {exc}", file=sys.stderr)
+        return 1
+    for claim in claims:
         print(f"OK  {claim}")
+    return 0
+
+
+if __name__ == "__main__":  # pragma: no cover
+    sys.exit(main())

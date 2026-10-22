@@ -56,3 +56,25 @@ def test_action_record_carries_reason_trace():
     r = ActionRecord(action_id="a1", intervention=i, status="executed",
                      at=AT, reason_trace=["wbgt=29.4 >= 28"])
     assert r.approved_by is None and r.reason_trace == ["wbgt=29.4 >= 28"]
+
+
+def test_physical_inputs_are_bounded_at_construction():
+    for bad in (450.0, float("inf"), float("nan"), 313.0):
+        with pytest.raises(ValidationError):
+            WeatherReading(air_temp_c=bad, humidity_pct=62.0)
+
+    with pytest.raises(ValidationError):
+        WeatherReading(air_temp_c=41.0, humidity_pct=62.0, wbgt_c=80.0)
+    with pytest.raises(ValidationError):
+        WeatherReading(air_temp_c=41.0, humidity_pct=62.0, solar_wm2=1500.0)
+    with pytest.raises(ValidationError):
+        SiteReading(wbgt_c=75.0)
+    with pytest.raises(ValidationError):
+        SatelliteReading(lst_c=120.0)
+    with pytest.raises(ValidationError):
+        HeatState(zone_id="z", at=AT, air_temp_c=41.0, humidity_pct=62.0,
+                  wbgt_c=float("nan"), source_tier="weather")
+
+    WeatherReading(air_temp_c=48.0, humidity_pct=62.0, wbgt_c=46.0, solar_wm2=1000.0)
+    SiteReading(wbgt_c=42.0)
+    SatelliteReading(lst_c=75.0)

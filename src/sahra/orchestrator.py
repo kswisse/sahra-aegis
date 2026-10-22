@@ -41,11 +41,13 @@ def run_cycle(
             f"threshold={THRESHOLD_C}",
             f"level={assessment.level.value}",
             f"expected_risk_reduction={intervention.expected_risk_reduction}",
+            f"zone={zone_id}",
         ]
         try:
             gate.authorize(intervention, approved_by)
             status, approver = "executed", approved_by
-        except ApprovalRequired:
+        except ApprovalRequired as exc:
+            trace.append(f"gate_reason={exc}")
             status, approver = "refused", None
         record = ActionRecord(
             action_id=uuid4().hex[:12], intervention=intervention, status=status,

@@ -73,8 +73,8 @@ def run_day(
     queue: ApprovalQueue | None = None,
 ) -> DayTimeline:
     """Run one cycle per hour over the fixture's hours, in order."""
-    provider = HourlyWeatherProvider(fixture_path)
     try:
+        provider = HourlyWeatherProvider(fixture_path)
         hours = provider.hours(zone_id)
     except KeyError as exc:
         raise KeyError(f"fixture {fixture_path}: {exc}") from exc
@@ -110,8 +110,6 @@ def run_day(
         issued.update(kind for kind, _ in pairs)
 
         index = result.state.wbgt_c
-        if index is None:
-            index = result.assessment.wbgt_c
         if peak_index is None or index > peak_index:
             peak_index, peak_at = index, at
 

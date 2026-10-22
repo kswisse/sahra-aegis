@@ -57,6 +57,11 @@ def _peak_step(timeline):
     return next(step for step in timeline.steps if step.at == timeline.peak_at)
 
 
+def _peak_refusal(refusals, peak_at):
+    """The refusal logged at the peak hour; the displayed WBGT can repeat."""
+    return next(refusal for refusal in refusals if refusal.at == peak_at)
+
+
 def _header(meta: dict, fixture: Path, timeline, audit_path: str) -> list[str]:
     lines = [
         "SAHRA day demo - one archived Dubai day, hour by hour",
@@ -130,8 +135,7 @@ def _escalation(timeline, queue: ApprovalQueue, records: list, approver: str) ->
         f"      reason: {'; '.join(first.reason_trace)}",
     ]
 
-    peak_refusal = next(refusal for refusal in refusals
-                        if _trace_value(refusal, "wbgt") == str(timeline.peak_wbgt_c))
+    peak_refusal = _peak_refusal(refusals, timeline.peak_at)
     pending = pendings[refusals.index(peak_refusal)]
     decision = queue.decide(pending.request_id, approver, approve=True)
     lines += [

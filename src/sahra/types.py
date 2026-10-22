@@ -25,27 +25,27 @@ class InterventionKind(str, Enum):
 
 
 class SatelliteReading(BaseModel):
-    lst_c: float
+    lst_c: float = Field(ge=-20, le=90)
 
 
 class WeatherReading(BaseModel):
-    air_temp_c: float
+    air_temp_c: float = Field(ge=-20, le=70)
     humidity_pct: float = Field(ge=0, le=100)
-    wbgt_c: float | None = None        # outdoor index, when the provider can derive it
-    solar_wm2: float | None = None     # the irradiance that produced that index
+    wbgt_c: float | None = Field(default=None, ge=-20, le=70)        # outdoor index, when the provider can derive it
+    solar_wm2: float | None = Field(default=None, ge=0, le=1400)     # the irradiance that produced that index
 
 
 class SiteReading(BaseModel):
-    wbgt_c: float
+    wbgt_c: float = Field(ge=-20, le=70)
 
 
 class HeatState(BaseModel):
     zone_id: str
     at: datetime
-    air_temp_c: float
+    air_temp_c: float = Field(ge=-20, le=70)
     humidity_pct: float = Field(ge=0, le=100)
-    wbgt_c: float | None = None
-    lst_c: float | None = None
+    wbgt_c: float | None = Field(default=None, ge=-20, le=70)
+    lst_c: float | None = Field(default=None, ge=-20, le=90)
     source_tier: Literal["site", "weather-outdoor", "weather"]
 
 

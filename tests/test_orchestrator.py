@@ -58,3 +58,13 @@ def test_extreme_day_with_approval_executes_escalation(tmp_path):
 def test_every_action_has_a_reason_trace(tmp_path):
     r = run(tmp_path, 33.5)
     assert r.actions and all(a.reason_trace for a in r.actions)
+
+
+def test_a_refusal_records_the_gate_reason_and_the_zone(tmp_path):
+    r = run(tmp_path, 33.5)
+    refused = next(a for a in r.actions if a.status == "refused")
+    trace = refused.reason_trace
+    assert "zone=school-dxb-001" in trace
+    gate_reason = next(item for item in trace if item.startswith("gate_reason="))
+    assert "human approval required" in gate_reason
+    assert InterventionKind.ESCALATE.value in gate_reason

@@ -22,6 +22,24 @@ FIXTURE = ROOT / "data" / "dubai_hourly_2026-08-13.json"
 APPROVER = "coordinator@dxbops"
 
 
+def test_the_peak_refusal_is_selected_by_hour_not_rounded_wbgt():
+    import importlib.util
+    from datetime import datetime, timezone
+    from types import SimpleNamespace
+
+    spec = importlib.util.spec_from_file_location("demo_day", SCRIPT)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    early = datetime(2026, 8, 13, 11, 0, tzinfo=timezone.utc)
+    peak = datetime(2026, 8, 13, 14, 0, tzinfo=timezone.utc)
+    refusals = [
+        SimpleNamespace(at=early, reason_trace=["wbgt=34.5"]),
+        SimpleNamespace(at=peak, reason_trace=["wbgt=34.5"]),
+    ]
+    assert module._peak_refusal(refusals, peak) is refusals[1]
+
+
 def test_the_day_demo_runs_the_extreme_day_offline_and_leaves_no_trace(tmp_path, monkeypatch, capsys):
     def no_network(*args, **kwargs):
         raise AssertionError("the demo must not touch the network")

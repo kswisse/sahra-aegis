@@ -183,6 +183,16 @@ def test_an_unusable_fixture_fails_loudly_and_names_the_file(tmp_path):
     assert "dubai" in unknown_zone.value.args[0]
 
 
+def test_a_malformed_fixture_names_the_file_in_the_error(tmp_path):
+    broken = tmp_path / "broken.json"
+    broken.write_text(json.dumps({"hours": []}), encoding="utf-8")
+    audit = AuditLog(tmp_path / "audit.jsonl")
+    with pytest.raises(KeyError) as malformed:
+        run_day("synthetic-broken", PopulationGroup.SCHOOL, broken, ApprovalGate(), audit)
+    assert str(broken) in malformed.value.args[0]
+    assert "meta" in malformed.value.args[0]
+
+
 def test_the_day_runs_offline(tmp_path, monkeypatch):
     def no_network(*args, **kwargs):
         raise AssertionError("the supervisor must not touch the network")

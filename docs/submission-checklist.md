@@ -1,6 +1,6 @@
 # SAHRA — Create AI Agents Championship submission checklist
 
-Status: engine complete @ `f7e535f` (main, 65 tests, offline demo + replay).
+Status: engine complete @ `ff30f31` (main, 99 tests, offline demo + replay).
 Checked against verified competition facts as of 2026-10-20. `UNKNOWN` items
 need a source before they gate anything — do not act on guesses.
 
@@ -30,16 +30,16 @@ need a source before they gate anything — do not act on guesses.
 
 Engine:
 - [x] Deterministic 5-agent cycle, human-in-the-loop gate, append-only audit —
-      all reviewed + tested (65 passing).
+      all reviewed + tested (99 passing).
 - [x] Offline demo: `.venv/Scripts/python -m sahra.demo`
 - [x] Validation replay with external anchors (MOHRE window, NCM records):
       `python -m sahra.replay` — survives `python -O`.
-- [ ] **TODO** Setup script (`scripts/setup` or pip install path) so a judge
-      runs one command from a clean clone.
+- [x] Setup script `scripts/bootstrap.py` — one command from a clean clone
+      (creates the venv, installs the project, runs the suite).
 - [ ] **TODO** One-page architecture sheet with the annex claim
       (deterministic 93.33% vs LLM-orchestrated 74.44%) sourced to the paper.
-- [ ] **TODO** Demo script: staged, screen-recordable, ≤ 3 min, English-only —
-      hazardous day → proposal → approval → audit line.
+- [x] Demo script `scripts/demo_day.py` — staged, screen-recordable, ≤ 3 min,
+      English-only — hazardous day → proposal → approval → audit line.
 
 Narrative:
 - [ ] **TODO** Essay skeleton from spec §12, keeping the POV-v2 relabels:

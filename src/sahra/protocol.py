@@ -65,6 +65,7 @@ class ProposalPayload(BaseModel):
     state: HeatState
     assessment: RiskAssessment
     interventions: list[Intervention]
+    links: dict[str, str] = Field(default_factory=dict)
 
 
 class DecisionPayload(BaseModel):

@@ -24,6 +24,7 @@ from pathlib import Path
 from pydantic import BaseModel
 
 from .audit import AuditLog
+from .blackboard import Blackboard
 from .gate import ApprovalGate
 from .hitl import ApprovalQueue
 from .orchestrator import run_cycle
@@ -93,6 +94,7 @@ def run_day(
     issued: set[InterventionKind] = set()
     peak_index: float | None = None
     peak_at = hours[0]
+    blackboard = Blackboard()
 
     for at in hours:
         try:
@@ -101,7 +103,7 @@ def run_day(
             raise KeyError(f"fixture {fixture_path}: {exc}") from exc
         result = run_cycle(
             zone_id=zone_id, group=group, at=at, satellite=None, weather=weather,
-            site=None, gate=gate, audit=audit,
+            site=None, gate=gate, audit=audit, blackboard=blackboard,
         )
         pairs = [(action.intervention.kind, action.status) for action in result.actions]
         dispatched = [pair for pair in pairs if pair[0] not in issued]
@@ -127,6 +129,7 @@ def run_day(
                         action, zone_id, severity=result.assessment.wbgt_c).request_id
                     if request_id not in pending_ids:
                         pending_ids.append(request_id)
+            blackboard.sync(queue.pending())
 
     return DayTimeline(
         zone_id=zone_id,

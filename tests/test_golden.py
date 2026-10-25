@@ -40,6 +40,16 @@ def _normalise(records):
             raw_ids.append(record.action_id)
     tokens = {raw: f"<action_id:{i}>" for i, raw in enumerate(raw_ids)}
 
+    raw_requests = []
+    for record in records:
+        for item in record.reason_trace:
+            if item.startswith("linked_request="):
+                request_id = item.split("=", 1)[1]
+                if request_id not in raw_requests:
+                    raw_requests.append(request_id)
+    request_tokens = {
+        raw: f"<request_id:{i}>" for i, raw in enumerate(raw_requests)}
+
     normalised = []
     for record in records:
         row = json.loads(record.model_dump_json())
@@ -47,6 +57,8 @@ def _normalise(records):
         trace = []
         for item in row["reason_trace"]:
             for raw, token in tokens.items():
+                item = item.replace(raw, token)
+            for raw, token in request_tokens.items():
                 item = item.replace(raw, token)
             if item.startswith("requested_at="):
                 item = "requested_at=<ts>"

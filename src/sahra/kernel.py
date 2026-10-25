@@ -10,6 +10,7 @@ from .agents import (
     VerifyAgent,
 )
 from .audit import AuditLog
+from .blackboard import Blackboard
 from .coordinator import AgentCoordinator
 from .gate import ApprovalGate
 from .protocol import AgentRole
@@ -32,13 +33,15 @@ def run_cycle(
     gate: ApprovalGate,
     audit: AuditLog,
     approved_by: str | None = None,
+    blackboard: Blackboard | None = None,
 ) -> CycleResult:
     """Deterministic control plane: sense -> assess -> plan -> gate -> act -> log.
     No LLM participates in any of these transitions."""
+    board = blackboard if blackboard is not None else Blackboard()
     monitor = MonitorAgent()
     predict = PredictAgent(group)
-    planner = PlanAgent()
-    act = ActAgent(gate, audit, approved_by)
+    planner = PlanAgent(board)
+    act = ActAgent(gate, audit, approved_by, board)
     verify = VerifyAgent()
     coordinator = AgentCoordinator({
         AgentRole.MONITOR: monitor,

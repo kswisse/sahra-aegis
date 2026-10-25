@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 from ..audit import AuditLog
+from ..blackboard import Blackboard
 from ..coordinator import AgentBase
 from ..gate import ApprovalGate, ApprovalRequired
 from ..protocol import AgentRole, DecisionPayload, Message, MessageKind
@@ -19,15 +20,18 @@ class ActAgent(AgentBase):
         gate: ApprovalGate,
         audit: AuditLog,
         approved_by: str | None,
+        blackboard: Blackboard,
     ) -> None:
         self.gate = gate
         self.audit = audit
         self.approved_by = approved_by
+        self.blackboard = blackboard
         self.last_actions: list[ActionRecord] = []
 
     def handle(self, message: Message) -> list[Message]:
         state = message.payload.state
         assessment = message.payload.assessment
+        links = message.payload.links
         actions: list[ActionRecord] = []
         for intervention in message.payload.interventions:
             trace = [
@@ -46,6 +50,11 @@ class ActAgent(AgentBase):
             except ApprovalRequired as exc:
                 trace.append(f"gate_reason={exc}")
                 status, approver = "refused", None
+                request_id = links.get(intervention.kind.value)
+                if request_id is not None:
+                    trace.append(f"linked_request={request_id}")
+                self.blackboard.record_refusal(
+                    state.zone_id, intervention.kind, assessment.level)
             record = ActionRecord(
                 action_id=uuid4().hex[:12], intervention=intervention, status=status,
                 at=state.at, approved_by=approver, reason_trace=trace,

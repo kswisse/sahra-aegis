@@ -41,6 +41,7 @@ class ObservationPayload(BaseModel):
 
 
 class AssessmentPayload(BaseModel):
+    state: HeatState
     assessment: RiskAssessment
 
 
@@ -58,6 +59,8 @@ class RulingPayload(BaseModel):
 
 
 class ProposalPayload(BaseModel):
+    state: HeatState
+    assessment: RiskAssessment
     interventions: list[Intervention]
 
 

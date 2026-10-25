@@ -20,7 +20,11 @@ class PlanAgent(AgentBase):
             self.emit(
                 MessageKind.PROPOSAL,
                 AgentRole.ACT,
-                ProposalPayload(interventions=interventions),
+                ProposalPayload(
+                    state=message.payload.state,
+                    assessment=message.payload.assessment,
+                    interventions=interventions,
+                ),
                 message.correlation_id,
             )
         ]

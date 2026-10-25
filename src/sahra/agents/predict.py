@@ -1,5 +1,3 @@
-from typing import Any
-
 from ..coordinator import AgentBase
 from ..protocol import AgentRole, AssessmentPayload, Message, MessageKind
 from ..risk import assess
@@ -12,9 +10,8 @@ class PredictAgent(AgentBase):
     role = AgentRole.PREDICT
     emits = frozenset({MessageKind.ASSESSMENT})
 
-    def __init__(self, group: PopulationGroup, context: dict[str, Any]) -> None:
+    def __init__(self, group: PopulationGroup) -> None:
         self.group = group
-        self.context = context
         self.last_state: HeatState | None = None
         self.last_assessment: RiskAssessment | None = None
 
@@ -22,13 +19,11 @@ class PredictAgent(AgentBase):
         state = message.payload.state
         assessment = assess(state, self.group)
         self.last_state, self.last_assessment = state, assessment
-        # Shared per-cycle context: Act needs the sensed state for its trace.
-        self.context["state"], self.context["assessment"] = state, assessment
         return [
             self.emit(
                 MessageKind.ASSESSMENT,
                 AgentRole.PLAN,
-                AssessmentPayload(assessment=assessment),
+                AssessmentPayload(state=state, assessment=assessment),
                 message.correlation_id,
             )
         ]

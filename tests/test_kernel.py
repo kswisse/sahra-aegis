@@ -39,6 +39,14 @@ def test_decision_message_carries_the_cycle_actions(tmp_path):
         a.action_id for a in r.actions]
 
 
+def test_proposal_carries_its_own_inputs(tmp_path):
+    """Act must read the state and assessment from the message, not a side channel."""
+    r = run(tmp_path, 31.0)
+    proposal = next(m for m in r.transcript if m.kind is MessageKind.PROPOSAL)
+    assert proposal.payload.state == r.state
+    assert proposal.payload.assessment == r.assessment
+
+
 def test_two_identical_cycles_emit_the_same_sequence(tmp_path):
     first = run(tmp_path, 31.0)
     second = run(tmp_path, 31.0)

@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Any
 from uuid import uuid4
 
 from .agents import ActAgent, MonitorAgent, PlanAgent, PredictAgent, VerifyAgent
@@ -29,11 +28,10 @@ def run_cycle(
 ) -> CycleResult:
     """Deterministic control plane: sense -> assess -> plan -> gate -> act -> log.
     No LLM participates in any of these transitions."""
-    context: dict[str, Any] = {}
     monitor = MonitorAgent()
-    predict = PredictAgent(group, context)
+    predict = PredictAgent(group)
     planner = PlanAgent()
-    act = ActAgent(gate, audit, approved_by, context)
+    act = ActAgent(gate, audit, approved_by)
     verify = VerifyAgent()
     coordinator = AgentCoordinator({
         AgentRole.MONITOR: monitor,

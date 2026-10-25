@@ -1,4 +1,3 @@
-from typing import Any
 from uuid import uuid4
 
 from ..audit import AuditLog
@@ -20,17 +19,15 @@ class ActAgent(AgentBase):
         gate: ApprovalGate,
         audit: AuditLog,
         approved_by: str | None,
-        context: dict[str, Any],
     ) -> None:
         self.gate = gate
         self.audit = audit
         self.approved_by = approved_by
-        self.context = context
         self.last_actions: list[ActionRecord] = []
 
     def handle(self, message: Message) -> list[Message]:
-        state = self.context["state"]
-        assessment = self.context["assessment"]
+        state = message.payload.state
+        assessment = message.payload.assessment
         actions: list[ActionRecord] = []
         for intervention in message.payload.interventions:
             trace = [

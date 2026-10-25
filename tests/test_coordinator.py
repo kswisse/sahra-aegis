@@ -84,7 +84,7 @@ class Predict(AgentBase):
             self.emit(
                 MessageKind.ASSESSMENT,
                 AgentRole.PLAN,
-                AssessmentPayload(assessment=_assessment()),
+                AssessmentPayload(state=_state(), assessment=_assessment()),
                 message.correlation_id,
             )
         ]
@@ -99,7 +99,8 @@ class Plan(AgentBase):
             self.emit(
                 MessageKind.PROPOSAL,
                 AgentRole.ACT,
-                ProposalPayload(interventions=[_intervention()]),
+                ProposalPayload(state=_state(), assessment=_assessment(),
+                                interventions=[_intervention()]),
                 message.correlation_id,
             )
         ]
@@ -166,7 +167,8 @@ def test_undeclared_kind_raises_and_transcript_stays_valid() -> None:
         sender=AgentRole.PLAN,
         recipient=AgentRole.ACT,
         kind=MessageKind.PROPOSAL,
-        payload=ProposalPayload(interventions=[_intervention()]),
+        payload=ProposalPayload(state=_state(), assessment=_assessment(),
+                                interventions=[_intervention()]),
     )
     coordinator = AgentCoordinator(agents)
 

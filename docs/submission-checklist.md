@@ -39,8 +39,9 @@ Engine:
       `python -m sahra.replay` — survives `python -O`.
 - [x] Setup script `scripts/bootstrap.py` — one command from a clean clone
       (creates the venv, installs the project, runs the suite).
-- [ ] **TODO** One-page architecture sheet with the annex claim
-      (deterministic 93.33% vs LLM-orchestrated 74.44%) sourced to the paper.
+- [x] One-page architecture sheet `docs/architecture-one-page.md`; the annex claim
+      (deterministic 93.33% vs LLM-orchestrated 74.44%) is cited to the paper in
+      `README.md` and row C1 of `docs/claims.md`.
 - [x] Demo script `scripts/demo_day.py` — staged, screen-recordable, ≤ 3 min,
       English-only — hazardous day → proposal → approval → audit line.
 

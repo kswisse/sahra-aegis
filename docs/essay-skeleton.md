@@ -52,7 +52,7 @@ row id), and the sentence it must not write. Draft in this order; the opening is
 - Anchor 2 - NCM record days: the replay file carries three station readings (51.6 / 46.6 /
   50.0 °C) and three reanalysis grid samples that sit below them; the highest row is 33.7 °C
   at 13:00 (C9). The grid is a coverage input, not evidence about people.
-- Regression: 145 tests (C4), three byte-identical golden transcripts (C5), and the
+- Regression: 148 tests (C4), three byte-identical golden transcripts (C5), and the
   conservative-max ruling reproduced from the transcript (C12).
 - **Do not write:** "validated against health outcomes", or any accuracy percentage for
   SAHRA itself. Nothing in the repo measures that.
@@ -64,6 +64,8 @@ row id), and the sentence it must not write. Draft in this order; the opening is
   not prediction of harm (C2, note 4).
 - Satellite LST is used as a sanity check only - a reading far above air temperature is
   flagged, not acted on.
+- The replay series is one 13:00 row per location, so it cannot show the 09:00-12:00 exposure
+  peak; the 24-hour fixtures carry the diurnal window instead (note 6).
 - The engine reports decision latency and action uptake. It does not report avoided harm.
   Every run ends with that sentence (C11).
 - **Do not write:** "saves lives", "reduces heatstroke", or any projected percentage.

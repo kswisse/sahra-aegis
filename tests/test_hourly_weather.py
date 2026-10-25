@@ -47,6 +47,25 @@ def test_provider_samples_the_hour_and_derives_outdoor_wbgt():
     assert reading.wbgt_c >= approx_wbgt_c(reading.air_temp_c, reading.humidity_pct)
 
 
+def test_the_provider_names_the_fixture_and_the_hour_when_a_hour_is_missing(tmp_path):
+    """A hole in the archive must not read as an ordinary KeyError: the message
+    carries the fixture path and the hour, so a corrupt file is diagnosable."""
+    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    holed = tmp_path / "holed.json"
+    holed.write_text(json.dumps({
+        "meta": payload["meta"],
+        "hours": [h for h in payload["hours"] if not h["time"].startswith("2026-07-01T12:00")],
+    }), encoding="utf-8")
+
+    provider = HourlyWeatherProvider(holed)
+    with pytest.raises(KeyError) as missing:
+        provider.sample("dubai-2026-07-01", datetime.fromisoformat("2026-07-01T12:00:00+04:00"))
+
+    message = missing.value.args[0]
+    assert str(holed) in message
+    assert "2026-07-01T12:00:00+04:00" in message
+
+
 def test_provider_lists_hours_in_order_and_rejects_an_unknown_zone_or_hour():
     provider = HourlyWeatherProvider(FIXTURE)
     hours = provider.hours("dubai-2026-07-01")

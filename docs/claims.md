@@ -11,7 +11,7 @@ reader can open), `unverified` (must be rewritten or deleted before submission).
 | C1 | Deterministic orchestration 93.33% task success vs 74.44% LLM-orchestrated, single-agent baseline 94.44%, over 270 runs (30 tasks x 3 repetitions) | `README.md` "Why deterministic"; design spec s5 | external | Malik & Qureshi, *Do Multi-Agent LLM Systems Actually Help? A Controlled Evaluation of Single-Agent, LLM-Orchestrated, and Deterministically Orchestrated Architectures*, Zenodo preprint, 25 Sep 2026, doi:10.5281/zenodo.22957164. PDF p.7: "System A passed 85 of 90 runs (94.44%). System B passed 67 of 90 (74.44%). System C passed 84 of 90 (93.33%)." | keep, cite DOI, and state that the single agent scored highest (see note 1) |
 | C2 | Occupational WBGT threshold 28 °C; bands <28 low / 28-30 moderate / 30-32 high / >=32 extreme | `README.md` contract; `src/sahra/risk.py` | external | research note `outdoor-occupational-environments-and-heat-stress-in-iran-journal-of-environment` (J Environ Health Sci Eng); ISO 7243 is the screening standard named in the design spec | keep |
 | C3 | Vulnerability weights `school=1.0`, `outdoor_worker=1.05` | `README.md` contract; `src/sahra/risk.py` | engine-output | design choice, not a measured value: asserted in `tests/test_risk.py` ordering tests | keep, and never present as evidence |
-| C4 | 145 tests | `README.md` "Run it" | engine-output | `python -m pytest -q` -> `145 passed` | keep |
+| C4 | 148 tests | `README.md` "Run it" | engine-output | `python -m pytest -q` -> `148 passed` | keep |
 | C5 | 3 golden transcripts byte-identical | `README.md` regression section; `tests/test_golden.py` | engine-output | `python -m pytest tests/test_golden.py -q` -> `3 passed` | keep |
 | C6 | 2026-07-01 fixture peaks at 31.4 °C at 11:00 local, `high` band, no escalation | `README.md` fixture table | engine-output | `python scripts/demo_day.py --fixture data/dubai_hourly_2026-07-01.json` -> `Peak WBGT 31.4 C at 11:00 local (high band).` and `No escalation was raised on this day` | keep |
 | C7 | That run writes 57 audit records | `README.md` demo walkthrough | engine-output | same command -> `Audit tail (last 8 of the 57 records this run wrote; the log is append-only)` | keep |
@@ -43,3 +43,9 @@ reader can open), `unverified` (must be rewritten or deleted before submission).
    demo narration; it is the claim boundary, not boilerplate.
 5. **Re-verify the engine rows** with the commands above after any change to the engine. A
    stale count here is worse than no count.
+6. **The replay file is 13:00-only (deliberate limitation).** `data/dubai_replay.json` holds one
+   midday row per location, so the replay cannot represent the 09:00-12:00 exposure peak - it
+   exercises the banding on a labelled midday sample. The diurnal window comes from the 24-hour
+   fixtures (C6, C8), whose peak hours are 11:00 and 14:00. `tests/test_replay.py::
+   test_the_replay_file_is_one_midday_row_per_day_not_a_diurnal_day` pins this, and the essay
+   states it as a limitation to be fixed with an hourly replay series, not papered over.

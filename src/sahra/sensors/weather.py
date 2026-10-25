@@ -46,7 +46,8 @@ class HourlyWeatherProvider:
     """
 
     def __init__(self, fixture_path: Path | str):
-        payload = json.loads(Path(fixture_path).read_text(encoding="utf-8"))
+        self._path = Path(fixture_path)
+        payload = json.loads(self._path.read_text(encoding="utf-8"))
         meta = payload["meta"]
         self._zone_id = meta["zone_id"]
         self._latitude_deg = meta["latitude"]
@@ -55,7 +56,10 @@ class HourlyWeatherProvider:
 
     def sample(self, zone_id: str, at: datetime) -> WeatherReading:
         self._check_zone(zone_id)
-        row = self._rows[self._local_key(at)]
+        key = self._local_key(at)
+        row = self._rows.get(key)
+        if row is None:
+            raise KeyError(f"fixture {self._path} has no row for {key.isoformat()}")
         solar = row["global_radiation_wm2"]
         direct_fraction = row["direct_radiation_wm2"] / solar if solar > 0 else 0.8
         index = wbgt_outdoor_c(

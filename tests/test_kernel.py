@@ -66,3 +66,19 @@ def test_refused_escalation_keeps_its_gate_reason_and_zone(tmp_path):
     assert "zone=school-dxb-001" in trace
     gate_reason = next(item for item in trace if item.startswith("gate_reason="))
     assert "human approval required" in gate_reason
+
+
+def test_a_refusal_does_not_stop_the_cycle(tmp_path):
+    """The refusal is one action's outcome, not an abort: the other actions are
+    still decided and the cycle still verifies. The next hour is covered by
+    test_a_refused_escalation_becomes_a_pending_request_that_an_approval_executes."""
+    r = run(tmp_path, 33.5)
+    assert len(r.actions) == 4
+    assert [a.status for a in r.actions].count("refused") == 1
+    assert r.verification.ok
+    assert [m.kind for m in r.transcript] == [
+        MessageKind.OBSERVATION,
+        MessageKind.ASSESSMENT,
+        MessageKind.PROPOSAL,
+        MessageKind.DECISION,
+    ]

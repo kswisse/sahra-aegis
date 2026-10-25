@@ -193,6 +193,26 @@ def test_a_malformed_fixture_names_the_file_in_the_error(tmp_path):
     assert "meta" in malformed.value.args[0]
 
 
+def test_a_fixture_with_a_hole_is_refused_instead_of_running_a_short_day(tmp_path):
+    """A truncated archive must not read as a plausible 23-hour day: the gap is
+    named with the fixture path and both hours around it."""
+    payload = json.loads(FIXTURE.read_text(encoding="utf-8"))
+    holed = tmp_path / "holed.json"
+    holed.write_text(json.dumps({
+        "meta": payload["meta"],
+        "hours": [h for h in payload["hours"] if not h["time"].startswith("2026-07-01T12:00")],
+    }), encoding="utf-8")
+
+    with pytest.raises(ValueError) as gap:
+        run_day("dubai-2026-07-01", PopulationGroup.SCHOOL, holed,
+                ApprovalGate(), AuditLog(tmp_path / "audit.jsonl"))
+
+    message = str(gap.value)
+    assert str(holed) in message
+    assert "2026-07-01T11:00:00+04:00" in message
+    assert "2026-07-01T13:00:00+04:00" in message
+
+
 def test_the_day_runs_offline(tmp_path, monkeypatch):
     def no_network(*args, **kwargs):
         raise AssertionError("the supervisor must not touch the network")

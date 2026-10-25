@@ -15,7 +15,8 @@ on video; scrollback cleared first.
 .venv/Scripts/python scripts/agent_transcript.py
 ```
 
-Expected, in this order (the numbers are fixed by the fixture):
+Expected, in this order (the numbers are fixed by the fixture; the script prints two header
+lines first, and repeats the ruling before `verify: ok`):
 
 ```
 monitor -> predict : observation : school-dxb-003 at 2027-07-14 13:00 UTC; wbgt 29.0 C from site
@@ -75,8 +76,9 @@ Expected: the last 8 of 69 records, ending with
 ```
 
 Say: the log is append-only and every line carries the approver, so a reviewer can see who
-signed what and when. Same fixture, same transcript, byte-identical every run - that is what
-the golden tests hold.
+signed what and when. Same fixture, same run - the decisions and the trace text come out
+identical every time; only the generated ids and the approval timestamp differ, and the golden
+tests normalise exactly those.
 
 ## Close (2:30-3:00)
 
@@ -88,15 +90,17 @@ Do not run anything. Say the boundary out loud, because it is the claim:
 
 ## Fallback
 
-If beat 2 fails on stage (terminal too narrow, file write blocked by permissions), fall back
-to the short deterministic demo, which needs no audit directory:
+If beat 2 fails on stage (terminal too narrow, the audit path is not writable), fall back to
+the short deterministic demo. It is quicker but it still writes its audit log, to
+`sahra-demo-out/audit.jsonl`:
 
 ```
 .venv/Scripts/python -m sahra.demo
 ```
 
-Expected: three `verify: ok` lines and one `escalate -> refused`. Then go straight to the
-close; beat 3 is a nicety, the refusal is the point.
+If that directory is the problem, run the command from a scratch directory instead. Expected:
+three `verify: ok` lines and one `escalate -> refused`. Then go straight to the close; beat 3
+is a nicety, the refusal is the point.
 
 If the venv itself fails, run `python scripts/bootstrap.py` (one command, needs network) and
 say what it is doing while it runs - or play the pre-recorded take.

@@ -9,7 +9,7 @@ row id), and the sentence it must not write. Draft in this order; the opening is
 - Dubai heat is managed at city scale, but exposure happens at one school gate or one work
   site. A city-wide average cannot tell a coordinator whether to move a football session.
 - The regulatory instrument already exists: the MOHRE midday ban, 15 June-15 September,
-  12:30-15:00 (`docs/claims.md` note 3). It is a blanket window, not a per-zone decision.
+  12:30-15:00 (C13). It is a blanket window, not a per-zone decision.
 - The gap is not data, and not another dashboard. It is the loop between a reading and an
   action that someone is accountable for.
 - **Do not write:** any claim that children or workers were harmed, or any number of heat
@@ -37,10 +37,12 @@ row id), and the sentence it must not write. Draft in this order; the opening is
 - Honest reading: the single agent scored highest. SAHRA takes the deterministic plane for
   replayability and auditability, and the multi-agent split for separations of duty a single
   prompt cannot provide - the verifier must not be the agent it verifies.
-- Cost is part of it: the LLM-orchestrated arm needed far more model calls and latency (C1).
-  SAHRA's control path needs none.
-- **Do not write:** "outperforms all architectures", or "proven". One preprint, phrase it as
-  a controlled study.
+- Cost is part of it: every multi-agent arm in that study used more tokens and latency than
+  the single agent (C1). SAHRA's control path calls no model at all, so it pays no inference
+  bill for the structure it keeps.
+- **Do not write:** "outperforms all architectures", "proven", or "cheaper than a single
+  agent" - the study's deterministic arm cost more than its single agent. One preprint, phrase
+  it as a controlled study.
 
 ## 4. How it is validated (250 words)
 
@@ -52,8 +54,9 @@ row id), and the sentence it must not write. Draft in this order; the opening is
 - Anchor 2 - NCM record days: the replay file carries three station readings (51.6 / 46.6 /
   50.0 °C) and three reanalysis grid samples that sit below them; the highest row is 33.7 °C
   at 13:00 (C9). The grid is a coverage input, not evidence about people.
-- Regression: 148 tests (C4), three byte-identical golden transcripts (C5), and the
-  conservative-max ruling reproduced from the transcript (C12).
+- Regression: 149 tests (C4), three golden transcripts that reproduce the same decisions and
+  trace text every run with generated ids normalised (C5), and the conservative-max ruling
+  reproduced from the transcript (C12).
 - **Do not write:** "validated against health outcomes", or any accuracy percentage for
   SAHRA itself. Nothing in the repo measures that.
 

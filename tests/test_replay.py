@@ -55,12 +55,13 @@ def test_reanalysis_understates_the_station_peak(days):
         assert d.air_temp_c < d.record_air_temp_c
 
 
-def test_the_replay_file_is_one_midday_row_per_day_not_a_diurnal_day(days):
+def test_the_replay_file_is_a_midday_sample_not_a_diurnal_day(days):
     """Pins the documented limitation: the replay cannot represent the
     09:00-12:00 exposure peak, only a 13:00 sample. The 24-hour fixtures carry
     the diurnal window. If diurnal rows are ever added, claims.md note 6 and the
     essay must be updated with this test."""
     assert {d.at().hour for d in days} == {13}
+    assert len(days) == len({(d.place, d.date) for d in days})
 
 
 def test_validate_returns_every_claim(days):

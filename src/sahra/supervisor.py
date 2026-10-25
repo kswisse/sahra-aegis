@@ -18,7 +18,7 @@ pairs, so a kind and its outcome can never drift apart. No LLM and no network
 take part.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from pydantic import BaseModel
@@ -88,6 +88,11 @@ def run_day(
         raise KeyError(f"fixture {fixture_path}: {exc}") from exc
     if not hours:
         raise ValueError(f"fixture {fixture_path} has no hours for zone {zone_id}")
+    for earlier, later in zip(hours, hours[1:]):
+        if later - earlier != timedelta(hours=1):
+            raise ValueError(
+                f"fixture {fixture_path} has a gap: no hour between "
+                f"{earlier.isoformat()} and {later.isoformat()}")
 
     steps: list[HourlyStep] = []
     pending_ids: list[str] = []

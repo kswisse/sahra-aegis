@@ -1,6 +1,6 @@
 # SAHRA — Create AI Agents Championship submission checklist
 
-Status: engine complete on `main` (148 tests, offline demo + replay).
+Status: engine complete on `main` (149 tests, offline demo + replay).
 Checked against verified competition facts as of 2026-10-20. `UNKNOWN` items
 need a source before they gate anything — do not act on guesses.
 
@@ -31,7 +31,7 @@ need a source before they gate anything — do not act on guesses.
 Engine:
 - [x] Deterministic 6-role cycle (typed messages, arbiter, verifier),
       human-in-the-loop gate, append-only audit — all reviewed + tested
-      (148 passing).
+      (149 passing).
 - [x] Agent transcript `.venv/Scripts/python scripts/agent_transcript.py` —
       one cycle message by message: dispute → ruling → `verify: ok`.
 - [x] Offline demo: `.venv/Scripts/python -m sahra.demo`
@@ -46,15 +46,14 @@ Engine:
       English-only — hazardous day → proposal → approval → audit line.
 
 Narrative:
-- [ ] **TODO** Essay skeleton from spec §12, keeping the POV-v2 relabels:
-      MOHRE ban = intervention under evaluation (not an outcome label); anchors
-      are "externally dated"; ISO 7243 = screening ceiling.
-- [ ] **TODO** Impact numbers: cite the decision metrics (latency/uptake), not
-      health outcomes — scope line `demo.py` already carries.
-- [ ] **TRACK/FIX-TIME** Replay gaps from the ledger: fixture is 13:00 only
-      (exposure peak 09:00–12:00); "cycle continues past refusal" not
-      test-locked; corrupt-fixture handling. Fix before Grand Final, not
-      before registration.
+- [x] Essay skeleton `docs/essay-skeleton.md` from spec §12, keeping the POV-v2
+      relabels: MOHRE ban = intervention under evaluation (not an outcome
+      label); anchors are "externally dated"; ISO 7243 = screening ceiling.
+- [x] Impact numbers: cite the decision metrics (latency/uptake), not health
+      outcomes — scope line `demo.py` already carries.
+- [x] Replay gaps from the ledger, closed: the replay file is 13:00-only by
+      design and pinned by a test + `docs/claims.md` note 6; "cycle continues
+      past refusal" test-locked; a fixture hole now raises a named error.
 
 ## Track C — Legal / financial (human, flagged UNKNOWN — do not assume)
 

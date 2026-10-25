@@ -16,14 +16,14 @@ Rationale: a controlled 270-run study (30 transactional tasks, three
 repetitions, the same models and tools in every arm) found that
 LLM-orchestrated multi-agent control lost reliability to coordination failures
 (74.44% task success) while deterministic orchestration recovered most of it
-(93.33%, against a 94.44% single-agent baseline) with far fewer model calls and
-lower latency - and it is the only arm that can be replayed from an append-only
-audit. Note that the single agent scored highest: SAHRA chooses the
-deterministic plane for reliability and replayability, not because it wins every
-comparison. Source: Malik & Qureshi, *Do Multi-Agent LLM Systems Actually
-Help? A Controlled Evaluation of Single-Agent, LLM-Orchestrated, and
-Deterministically Orchestrated Architectures*, Zenodo preprint, 25 Sep 2026,
-doi:10.5281/zenodo.22957164. Row C1 in `docs/claims.md`.
+(93.33%, against a 94.44% single-agent baseline). Note that the single agent
+scored highest, and every multi-agent arm cost more tokens and latency than it:
+SAHRA takes the deterministic plane for reliability and replayability, and its
+control path calls no model at all, so it keeps the structure that recovered the
+reliability without the inference bill. Source: Malik & Qureshi, *Do Multi-Agent
+LLM Systems Actually Help? A Controlled Evaluation of Single-Agent,
+LLM-Orchestrated, and Deterministically Orchestrated Architectures*, Zenodo
+preprint, 25 Sep 2026, doi:10.5281/zenodo.22957164. Row C1 in `docs/claims.md`.
 
 ## Architecture
 
@@ -31,8 +31,8 @@ Six roles over one deterministic cycle (`run_cycle` in `src/sahra/kernel.py`):
 
 | Stage | Module | Role |
 |-------|--------|------|
-| Monitor | `sensors/` | weather / site / satellite providers, tiered sourcing with offline fixtures |
-| Predict | `fusion.py`, `risk.py` | fusion into `HeatState`; WBGT in two forms — ISO 7243 outdoor (Dimiceli globe term) and a no-solar fallback (`0.7·Tw + 0.3·Ta`, Stull 2011 wet-bulb) |
+| Monitor | `agents/monitor.py`, `sensors/`, `fusion.py` | reads the tiered providers, fuses them into one `HeatState`, carries both WBGT readings (site and weather) |
+| Predict | `agents/predict.py`, `risk.py` | bands the index, raises a tier dispute when the two readings disagree; WBGT in two forms — ISO 7243 outdoor (Dimiceli globe term) and a no-solar fallback (`0.7·Tw + 0.3·Ta`, Stull 2011 wet-bulb) |
 | Plan | `planner.py` | evidence-linked interventions: ADVISE → SHIFT_ACTIVITY → ACTIVATE_COOLING → ESCALATE |
 | Act | `gate.py` | approval gate: a consequential intervention without an approver is **refused, never silently downgraded** |
 | Verify | `agents/verify.py` | invariant check over the finished cycle transcript; reports findings, never rewrites a decision |
@@ -109,11 +109,9 @@ that links an hourly refusal to the approval request already open for it.
 .venv/Scripts/python scripts/agent_transcript.py   # one cycle, message by message
 ```
 
-
-`ActionRecord.status` is
-narrowed to `executed | refused` — the only two outcomes the orchestrator and
-the queue produce — so an unexpected outcome fails loudly instead of quietly
-changing what the verification line means.
+`ActionRecord.status` is narrowed to `executed | refused` - the only two
+outcomes the orchestrator and the queue produce - so an unexpected outcome fails
+loudly instead of quietly changing what the verification line means.
 
 ## One-command setup
 
@@ -129,7 +127,7 @@ PyPI, for pydantic and pytest.
 ## Run
 
 ```bash
-.venv/Scripts/python -m pytest -q            # 148 tests
+.venv/Scripts/python -m pytest -q            # 149 tests
 .venv/Scripts/python scripts/demo_day.py     # one archived day, hour by hour
 .venv/Scripts/python -m sahra.demo           # end-to-end cycle, offline
 .venv/Scripts/python -m sahra.replay         # 6-day Dubai replay + validation claims

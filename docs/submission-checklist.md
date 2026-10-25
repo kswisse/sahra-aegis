@@ -1,6 +1,6 @@
 # SAHRA — Create AI Agents Championship submission checklist
 
-Status: engine complete @ `f7006d9` (main, 114 tests, offline demo + replay).
+Status: engine complete @ `14a2440` (feat/agent-kernel, 141 tests, offline demo + replay).
 Checked against verified competition facts as of 2026-10-20. `UNKNOWN` items
 need a source before they gate anything — do not act on guesses.
 
@@ -29,8 +29,11 @@ need a source before they gate anything — do not act on guesses.
 ## Track B — Technical deliverable (agent-owned)
 
 Engine:
-- [x] Deterministic 5-agent cycle, human-in-the-loop gate, append-only audit —
-      all reviewed + tested (114 passing).
+- [x] Deterministic 6-role cycle (typed messages, arbiter, verifier),
+      human-in-the-loop gate, append-only audit — all reviewed + tested
+      (141 passing).
+- [x] Agent transcript `.venv/Scripts/python scripts/agent_transcript.py` —
+      one cycle message by message: dispute → ruling → `verify: ok`.
 - [x] Offline demo: `.venv/Scripts/python -m sahra.demo`
 - [x] Validation replay with external anchors (MOHRE window, NCM records):
       `python -m sahra.replay` — survives `python -O`.

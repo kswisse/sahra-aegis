@@ -17,8 +17,7 @@ this architecture; single-agent baseline 94.44%).
 
 ## Architecture
 
-Five agents over one deterministic cycle (`run_cycle` in
-`src/sahra/orchestrator.py`):
+Six roles over one deterministic cycle (`run_cycle` in `src/sahra/kernel.py`):
 
 | Stage | Module | Role |
 |-------|--------|------|
@@ -26,7 +25,8 @@ Five agents over one deterministic cycle (`run_cycle` in
 | Predict | `fusion.py`, `risk.py` | fusion into `HeatState`; WBGT in two forms — ISO 7243 outdoor (Dimiceli globe term) and a no-solar fallback (`0.7·Tw + 0.3·Ta`, Stull 2011 wet-bulb) |
 | Plan | `planner.py` | evidence-linked interventions: ADVISE → SHIFT_ACTIVITY → ACTIVATE_COOLING → ESCALATE |
 | Act | `gate.py` | approval gate: a consequential intervention without an approver is **refused, never silently downgraded** |
-| Verify | `audit.py` | append-only JSONL log; every action carries a `reason_trace`; no PII |
+| Verify | `agents/verify.py` | invariant check over the finished cycle transcript; reports findings, never rewrites a decision |
+| Arbiter | `agents/arbiter.py` | rules a site-vs-weather conflict with `conservative-max` and names both readings |
 
 Contract: occupational WBGT threshold **28 °C**; bands `<28` low / `28–30`
 moderate / `30–32` high / `≥32` extreme; vulnerability weights `school=1.0`,
@@ -70,14 +70,35 @@ The queue holds one open request per `(zone, kind)`. A hazard that persists for
 hours is still refused and still audited every hour, but the open request is
 refreshed in place to the worst reading it saw, so the coordinator sees one
 escalation with the current evidence instead of one duplicate per hour; after a
-decision, the next refusal of that kind opens a new request.
+decision, the next refusal of that kind opens a new request. Each refusal of an
+already-open request carries `linked_request=<id>` in its trace, so the audit
+shows which request the hour belongs to.
 
-Source disagreement is resolved in the open, too: when the site sensor and the
-weather tier both yield an index more than 1 C apart, `fusion.py` takes the
-higher (conservative) one, records which tier supplied it, and writes both
-readings into the decision's `reason_trace`. A satellite land-surface
+Source disagreement is resolved in the open: when the site sensor and the
+weather tier both yield an index more than 1 C apart, Predict raises a dispute,
+the arbiter rules for the higher (conservative) value, and both readings land in
+the ruling text and the decision's `reason_trace`. A satellite land-surface
 temperature implausibly far above the air reading is labelled advisory only and
 never drives the decision.
+
+## Agent protocol
+
+The six roles — monitor, predict, plan, act, verify, arbiter — exchange typed
+`Message`s through one synchronous coordinator (`src/sahra/coordinator.py`).
+Each role declares the message kinds it may emit, so a forged `ruling` from
+anything but the arbiter is rejected before delivery. When the site sensor and
+the weather tier disagree by more than 1 °C, Predict raises a `dispute`; the
+arbiter rules `conservative-max` and names both readings; Predict then assesses
+the ruled value. The verifier checks the finished transcript — every refusal
+carries a gate reason, every dispute exactly one ruling, every ruling is
+conservative, every proposal has a decision, no action id repeats — and reports
+its findings without touching the decision. The blackboard is the per-run memory
+that links an hourly refusal to the approval request already open for it.
+
+```bash
+.venv/Scripts/python scripts/agent_transcript.py   # one cycle, message by message
+```
+
 
 `ActionRecord.status` is
 narrowed to `executed | refused` — the only two outcomes the orchestrator and
@@ -98,7 +119,7 @@ PyPI, for pydantic and pytest.
 ## Run
 
 ```bash
-.venv/Scripts/python -m pytest -q            # 114 tests
+.venv/Scripts/python -m pytest -q            # 141 tests
 .venv/Scripts/python scripts/demo_day.py     # one archived day, hour by hour
 .venv/Scripts/python -m sahra.demo           # end-to-end cycle, offline
 .venv/Scripts/python -m sahra.replay         # 6-day Dubai replay + validation claims

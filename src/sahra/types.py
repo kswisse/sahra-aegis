@@ -80,3 +80,5 @@ class CycleResult(BaseModel):
     assessment: RiskAssessment
     interventions: list[Intervention]
     actions: list[ActionRecord]
+    transcript: list | None = None
+    verification: object | None = None

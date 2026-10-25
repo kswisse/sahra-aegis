@@ -1,6 +1,6 @@
 # SAHRA — Create AI Agents Championship submission checklist
 
-Status: engine complete @ `dfc18fe` (feat/agent-kernel, 145 tests, offline demo + replay).
+Status: engine complete on `main` (145 tests, offline demo + replay).
 Checked against verified competition facts as of 2026-10-20. `UNKNOWN` items
 need a source before they gate anything — do not act on guesses.
 

@@ -34,7 +34,8 @@ def _verify(result) -> str:
         counts += f", {refused} refused pending human approval"
     if executed + refused != total:
         counts += f", {total - executed - refused} in an unaccounted status"
-    return (f"verify: {total} actions decided, {counts}; "
+    ok = result.verification is not None and result.verification.ok
+    return (f"verify: {'ok' if ok else 'FAILED'}; {total} actions decided, {counts}; "
             f"claim limited to decision latency and action uptake, not health outcome")
 
 

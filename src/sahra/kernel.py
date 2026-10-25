@@ -54,6 +54,7 @@ def run_cycle(
 
     seed = monitor.observe(zone_id, at, satellite, weather, site, uuid4().hex)
     coordinator.run([seed])
+    verification = verify.last_result
 
     return CycleResult(
         state=predict.last_state,
@@ -61,5 +62,5 @@ def run_cycle(
         interventions=planner.last_interventions,
         actions=act.last_actions,
         transcript=list(coordinator.transcript),
-        verification=None,
+        verification=verification,
     )

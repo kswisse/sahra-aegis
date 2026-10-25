@@ -2,22 +2,35 @@ from datetime import datetime, timezone
 
 import pytest
 
-from sahra.agents import PredictAgent
+from sahra.agents import ArbiterAgent, PredictAgent
 from sahra.audit import AuditLog
 from sahra.coordinator import AgentCoordinator
 from sahra.gate import ApprovalGate
 from sahra.kernel import run_cycle
 from sahra.protocol import (
     AgentRole,
+    AssessmentPayload,
     Message,
     MessageKind,
     ProtocolViolation,
     RulingPayload,
 )
-from sahra.types import PopulationGroup, SatelliteReading, SiteReading, WeatherReading
+from sahra.types import (
+    HeatState,
+    PopulationGroup,
+    RiskAssessment,
+    RiskLevel,
+    SatelliteReading,
+    SiteReading,
+    WeatherReading,
+)
 
 AT = datetime(2027, 7, 14, 13, 0, tzinfo=timezone.utc)
 WX = WeatherReading(air_temp_c=39.0, humidity_pct=35.0, wbgt_c=31.1, solar_wm2=500.0)
+STATE = HeatState(zone_id="z1", at=AT, air_temp_c=40.0, humidity_pct=30.0,
+                  wbgt_c=31.0, source_tier="site")
+ASSESSMENT = RiskAssessment(zone_id="z1", at=AT, group=PopulationGroup.SCHOOL,
+                            wbgt_c=31.0, score=0.7, level=RiskLevel.HIGH)
 
 
 def run(tmp_path, site_wbgt=29.0, weather=WX, satellite=None):
@@ -104,3 +117,40 @@ def test_only_the_arbiter_may_emit_a_ruling():
     )
     with pytest.raises(ProtocolViolation, match="may not emit ruling"):
         coordinator.run([forged])
+
+
+def test_a_gap_of_exactly_one_degree_is_not_disputed(tmp_path):
+    wx = WeatherReading(air_temp_c=41.0, humidity_pct=62.0, wbgt_c=32.0)
+    r = run(tmp_path, site_wbgt=31.0, weather=wx)
+    assert MessageKind.DISPUTE not in kinds(r)
+    assert r.state.wbgt_c == 31.0
+
+
+def test_a_ruling_with_no_pending_dispute_is_rejected():
+    predict = PredictAgent(PopulationGroup.SCHOOL)
+    orphan = Message(
+        correlation_id="never-disputed",
+        sender=AgentRole.ARBITER,
+        recipient=AgentRole.PREDICT,
+        kind=MessageKind.RULING,
+        payload=RulingPayload(
+            topic="wbgt-tier-conflict",
+            policy="conservative-max",
+            chosen_c=31.1,
+            reasoning="unsolicited",
+        ),
+    )
+    with pytest.raises(ProtocolViolation, match="no pending dispute"):
+        predict.handle(orphan)
+
+
+def test_the_arbiter_rejects_a_non_dispute():
+    message = Message(
+        correlation_id="c1",
+        sender=AgentRole.PREDICT,
+        recipient=AgentRole.ARBITER,
+        kind=MessageKind.ASSESSMENT,
+        payload=AssessmentPayload(state=STATE, assessment=ASSESSMENT),
+    )
+    with pytest.raises(ProtocolViolation, match="expects a dispute"):
+        ArbiterAgent().handle(message)

@@ -1,5 +1,11 @@
 from ..coordinator import AgentBase
-from ..protocol import AgentRole, Message, MessageKind, RulingPayload
+from ..protocol import (
+    AgentRole,
+    Message,
+    MessageKind,
+    ProtocolViolation,
+    RulingPayload,
+)
 
 
 class ArbiterAgent(AgentBase):
@@ -19,6 +25,9 @@ class ArbiterAgent(AgentBase):
         self.last_ruling: RulingPayload | None = None
 
     def handle(self, message: Message) -> list[Message]:
+        if message.kind is not MessageKind.DISPUTE:
+            raise ProtocolViolation(
+                f"arbiter expects a dispute, got {message.kind.value}")
         readings = message.payload.readings
         higher = max(readings, key=lambda reading: reading.value_c)
         gap = abs(readings[0].value_c - readings[1].value_c)

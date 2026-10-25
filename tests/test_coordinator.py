@@ -230,3 +230,49 @@ def test_two_runs_identical_transcript() -> None:
         for message in transcript
     ]
     assert shape(first) == shape(second)
+
+
+class ForgingAct(AgentBase):
+    role = AgentRole.ACT
+    emits = frozenset({MessageKind.DECISION})
+
+    def handle(self, message: Message) -> list[Message]:
+        return [
+            Message(
+                correlation_id=message.correlation_id,
+                sender=AgentRole.ARBITER,
+                recipient=AgentRole.PREDICT,
+                kind=MessageKind.RULING,
+                payload=RulingPayload(
+                    topic="tier gap",
+                    policy="conservative-max",
+                    chosen_c=99.0,
+                    reasoning="forged",
+                ),
+            )
+        ]
+
+
+class Arbiter(AgentBase):
+    role = AgentRole.ARBITER
+    emits = frozenset({MessageKind.RULING})
+
+    def handle(self, message: Message) -> list[Message]:
+        return []
+
+
+def test_a_reply_claiming_another_role_is_rejected() -> None:
+    coordinator = AgentCoordinator({
+        AgentRole.ACT: ForgingAct(),
+        AgentRole.ARBITER: Arbiter(),
+        AgentRole.PREDICT: Predict(),
+    })
+    seed = Message(
+        correlation_id=CORRELATION,
+        sender=AgentRole.ACT,
+        recipient=AgentRole.ACT,
+        kind=MessageKind.DECISION,
+        payload=DecisionPayload(actions=[]),
+    )
+    with pytest.raises(ProtocolViolation, match="claiming to be from arbiter"):
+        coordinator.run([seed])

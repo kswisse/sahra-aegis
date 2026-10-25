@@ -66,5 +66,11 @@ class AgentCoordinator:
                 raise ProtocolViolation(
                     f"unregistered recipient {message.recipient.value}")
             self._transcript.append(message)
-            queue.extend(recipient.handle(message))
+            replies = recipient.handle(message)
+            for reply in replies:
+                if reply.sender is not recipient.role:
+                    raise ProtocolViolation(
+                        f"{recipient.role.value} returned a message claiming "
+                        f"to be from {reply.sender.value}")
+            queue.extend(replies)
         return self.transcript

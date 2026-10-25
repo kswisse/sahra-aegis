@@ -119,7 +119,7 @@ PyPI, for pydantic and pytest.
 ## Run
 
 ```bash
-.venv/Scripts/python -m pytest -q            # 141 tests
+.venv/Scripts/python -m pytest -q            # 145 tests
 .venv/Scripts/python scripts/demo_day.py     # one archived day, hour by hour
 .venv/Scripts/python -m sahra.demo           # end-to-end cycle, offline
 .venv/Scripts/python -m sahra.replay         # 6-day Dubai replay + validation claims

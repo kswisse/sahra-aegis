@@ -6,6 +6,7 @@ from ..protocol import (
     DisputePayload,
     Message,
     MessageKind,
+    ProtocolViolation,
     RulingPayload,
     SourceReading,
 )
@@ -63,8 +64,12 @@ class PredictAgent(AgentBase):
         return [self._assess(state, message.correlation_id)]
 
     def _rule(self, message: Message) -> list[Message]:
-        state, weather_tier, site_c, weather_c = self._pending.pop(
-            message.correlation_id)
+        pending = self._pending.pop(message.correlation_id, None)
+        if pending is None:
+            raise ProtocolViolation(
+                f"ruling for a cycle with no pending dispute: "
+                f"{message.correlation_id}")
+        state, weather_tier, site_c, weather_c = pending
         ruling: RulingPayload = message.payload
         tier = "site" if site_c >= weather_c else weather_tier
         notes = [ruling.reasoning]

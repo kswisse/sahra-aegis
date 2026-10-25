@@ -97,6 +97,8 @@ def run_day(
     blackboard = Blackboard()
 
     for at in hours:
+        if queue is not None:
+            blackboard.sync(queue.pending())
         try:
             weather = provider.sample(zone_id, at)
         except KeyError as exc:
@@ -129,7 +131,6 @@ def run_day(
                         action, zone_id, severity=result.assessment.wbgt_c).request_id
                     if request_id not in pending_ids:
                         pending_ids.append(request_id)
-            blackboard.sync(queue.pending())
 
     return DayTimeline(
         zone_id=zone_id,

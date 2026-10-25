@@ -50,7 +50,7 @@ class AssessmentPayload(BaseModel):
 
 class DisputePayload(BaseModel):
     topic: str
-    readings: list[SourceReading]
+    readings: list[SourceReading] = Field(min_length=2)
     threshold_c: float
 
 

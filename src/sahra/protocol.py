@@ -38,6 +38,9 @@ class SourceReading(BaseModel):
 
 class ObservationPayload(BaseModel):
     state: HeatState
+    site_wbgt_c: float | None = None
+    weather_wbgt_c: float | None = None
+    weather_tier: Literal["weather-outdoor", "weather"] = "weather-outdoor"
 
 
 class AssessmentPayload(BaseModel):

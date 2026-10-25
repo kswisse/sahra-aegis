@@ -28,6 +28,13 @@ class MonitorAgent(AgentBase):
         return self.emit(
             MessageKind.OBSERVATION,
             AgentRole.PREDICT,
-            ObservationPayload(state=state),
+            ObservationPayload(
+                state=state,
+                site_wbgt_c=site.wbgt_c if site else None,
+                weather_wbgt_c=weather.wbgt_c,
+                weather_tier=(
+                    "weather-outdoor" if weather.wbgt_c is not None
+                    else "weather"),
+            ),
             correlation_id,
         )

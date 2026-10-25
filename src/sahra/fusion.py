@@ -20,29 +20,15 @@ def fuse(
     weather: WeatherReading,
     site: SiteReading | None,
 ) -> HeatState:
-    """Merge tiered readings. Satellite LST is regional and can never be the
-    sole basis for a zone-level decision, so it only populates lst_c.
+    """Merge tiered readings by precedence.
 
-    When a site sensor and the weather tier both yield an index and they differ
-    by more than TIER_DISAGREEMENT_C, the higher reading wins: an unresolved
-    disagreement is resolved conservatively, and the note says which two values
-    met and which one was taken. A disagreement of at most 1 C keeps the site
-    sensor, as before."""
+    Site wins; the weather tier supplies the index when no site sensor reports.
+    A site-vs-weather conflict is **not** resolved here: the observation carries
+    both indices and PredictAgent raises it to the arbiter, which owns the
+    ruling. Satellite LST is regional and can never be the sole basis for a
+    zone-level decision, so it only populates lst_c and an advisory note.
+    """
     notes: list[str] = []
-    wbgt_c = site.wbgt_c if site else weather.wbgt_c
-    tier = _tier(site, weather)
-    if site is not None and weather.wbgt_c is not None:
-        weather_tier = _tier(None, weather)
-        gap = abs(site.wbgt_c - weather.wbgt_c)
-        if gap > TIER_DISAGREEMENT_C:
-            if site.wbgt_c > weather.wbgt_c:
-                wbgt_c, tier = site.wbgt_c, "site"
-            else:
-                wbgt_c, tier = weather.wbgt_c, weather_tier
-            notes.append(
-                f"tiers disagree: site {site.wbgt_c:.1f} C vs {weather_tier} "
-                f"{weather.wbgt_c:.1f} C, gap {gap:.1f} C; chose the higher, "
-                f"conservative {wbgt_c:.1f} C from {tier}")
     if satellite is not None:
         gap = satellite.lst_c - weather.air_temp_c
         if gap > LST_AIR_GAP_C:
@@ -54,8 +40,8 @@ def fuse(
         at=at,
         air_temp_c=weather.air_temp_c,
         humidity_pct=weather.humidity_pct,
-        wbgt_c=wbgt_c,
+        wbgt_c=site.wbgt_c if site else weather.wbgt_c,
         lst_c=satellite.lst_c if satellite else None,
-        source_tier=tier,
+        source_tier=_tier(site, weather),
         disagreement="; ".join(notes) or None,
     )

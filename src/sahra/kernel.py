@@ -1,7 +1,14 @@
 from datetime import datetime
 from uuid import uuid4
 
-from .agents import ActAgent, MonitorAgent, PlanAgent, PredictAgent, VerifyAgent
+from .agents import (
+    ActAgent,
+    ArbiterAgent,
+    MonitorAgent,
+    PlanAgent,
+    PredictAgent,
+    VerifyAgent,
+)
 from .audit import AuditLog
 from .coordinator import AgentCoordinator
 from .gate import ApprovalGate
@@ -39,6 +46,7 @@ def run_cycle(
         AgentRole.PLAN: planner,
         AgentRole.ACT: act,
         AgentRole.VERIFY: verify,
+        AgentRole.ARBITER: ArbiterAgent(),
     })
 
     seed = monitor.observe(zone_id, at, satellite, weather, site, uuid4().hex)

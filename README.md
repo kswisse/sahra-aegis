@@ -10,10 +10,20 @@ Built for the Create AI Agents Championship (Dubai Chamber of Digital Economy).
 ## Why deterministic
 
 SAHRA's control plane is a typed state machine — no LLM anywhere in the
-decision path. An LLM may only render text in `channels/`. This follows the
-evidence that deterministic agent orchestration outperforms LLM-orchestrated
-control at equal capability (93.33% vs 74.44% in the benchmark that decided
-this architecture; single-agent baseline 94.44%).
+decision path. An LLM may only render text in `channels/`.
+
+Rationale: a controlled 270-run study (30 transactional tasks, three
+repetitions, the same models and tools in every arm) found that
+LLM-orchestrated multi-agent control lost reliability to coordination failures
+(74.44% task success) while deterministic orchestration recovered most of it
+(93.33%, against a 94.44% single-agent baseline) with far fewer model calls and
+lower latency - and it is the only arm that can be replayed from an append-only
+audit. Note that the single agent scored highest: SAHRA chooses the
+deterministic plane for reliability and replayability, not because it wins every
+comparison. Source: Malik & Qureshi, *Do Multi-Agent LLM Systems Actually
+Help? A Controlled Evaluation of Single-Agent, LLM-Orchestrated, and
+Deterministically Orchestrated Architectures*, Zenodo preprint, 25 Sep 2026,
+doi:10.5281/zenodo.22957164. Row C1 in `docs/claims.md`.
 
 ## Architecture
 

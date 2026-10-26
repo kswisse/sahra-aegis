@@ -51,6 +51,9 @@ Narrative:
       label); anchors are "externally dated"; ISO 7243 = screening ceiling.
 - [x] Impact numbers: cite the decision metrics (latency/uptake), not health
       outcomes — scope line `demo.py` already carries.
+- [x] Essay prose drafted at `docs/essay.md` (about 1,300 words, 8 sections,
+      every number tagged to a `docs/claims.md` row; delete the tags before
+      pasting). Owner owns the final wording.
 - [x] Replay gaps from the ledger, closed: the replay file is 13:00-only by
       design and pinned by a test + `docs/claims.md` note 6; "cycle continues
       past refusal" test-locked; a fixture hole now raises a named error.

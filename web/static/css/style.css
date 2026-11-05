@@ -1,0 +1,174 @@
+/* SAHRA AEGIS Operations Dashboard Stylesheet - Neon White Theme */
+
+:root {
+  --bg-primary: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.88);
+  --bg-card-hover: rgba(255, 255, 255, 0.96);
+  --border-subtle: rgba(226, 232, 240, 0.85);
+  --border-accent: rgba(14, 165, 233, 0.4);
+  
+  --color-low: #059669;
+  --color-moderate: #d97706;
+  --color-high: #ea580c;
+  --color-extreme: #dc2626;
+  --color-brand: #0284c7;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background-color: #ffffff;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(0, 245, 255, 0.18) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.16) 0px, transparent 50%),
+    radial-gradient(at 50% 50%, rgba(52, 211, 153, 0.14) 0px, transparent 55%),
+    radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.18) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(244, 63, 94, 0.12) 0px, transparent 50%);
+  background-attachment: fixed;
+  color: #0f172a;
+  min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+}
+
+code, pre, .font-mono {
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* Glassmorphism card container with subtle neon glow */
+.glass-panel {
+  background: var(--bg-card);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.04), 0 0 15px rgba(14, 165, 233, 0.05);
+}
+
+.glass-panel-accent {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(240, 249, 255, 0.9) 100%);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-accent);
+  border-radius: 12px;
+  box-shadow: 0 6px 24px -2px rgba(14, 165, 233, 0.1), 0 0 20px rgba(0, 245, 255, 0.08);
+}
+
+/* Clean risk badges */
+.badge-low {
+  background: rgba(16, 185, 129, 0.12);
+  color: #065f46;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+}
+
+.badge-moderate {
+  background: rgba(245, 158, 11, 0.12);
+  color: #92400e;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.badge-high {
+  background: rgba(249, 115, 22, 0.12);
+  color: #9a3412;
+  border: 1px solid rgba(249, 115, 22, 0.35);
+}
+
+.badge-extreme {
+  background: rgba(239, 68, 68, 0.15);
+  color: #991b1b;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.2);
+}
+
+/* Navigation Tab Active Indicator */
+.nav-tab {
+  transition: all 0.2s ease;
+  position: relative;
+  cursor: pointer;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #475569;
+}
+
+.nav-tab:hover {
+  color: #0284c7;
+  background: rgba(2, 132, 199, 0.04);
+}
+
+.nav-tab.active {
+  color: #0284c7;
+  background: rgba(2, 132, 199, 0.08);
+  border-color: rgba(2, 132, 199, 0.3);
+  font-weight: bold;
+}
+
+.nav-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 15%;
+  right: 15%;
+  height: 2px;
+  background: #0284c7;
+  box-shadow: 0 0 8px rgba(2, 132, 199, 0.6);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.8);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.8);
+}
+
+/* Range Slider */
+input[type=range] {
+  -webkit-appearance: none;
+  background: #e2e8f0;
+  border-radius: 6px;
+  height: 6px;
+  outline: none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #0284c7;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(2, 132, 199, 0.5);
+  transition: transform 0.1s;
+}
+
+input[type=range]::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
+}
+
+/* Animation utilities */
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAHRA AEGIS · Dubai Heat-Stress Decision Engine</title>
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Arial', 'Helvetica', 'sans-serif'],
+          },
+          colors: {
+            brand: '#0284c7',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-sky-500 selection:text-white">
+
+  <!-- TOP APP HEADER -->
+  <header class="border-b border-slate-200/80 bg-white/85 backdrop-blur-md sticky top-0 z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-4">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center gap-3">
+        <div class="px-2.5 py-1.5 rounded-lg bg-sky-600 text-white font-bold text-sm tracking-wider">
+          SA
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-bold tracking-tight text-slate-900">SAHRA <span class="text-sky-600">AEGIS</span></h1>
+            <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-sky-50 text-sky-700 border border-sky-200 uppercase tracking-widest">v1.0 Core</span>
+            <span class="px-2 py-0.5 text-[10px] font-bold rounded-md bg-amber-50 text-amber-700 border border-amber-200 uppercase tracking-wider hidden sm:inline-block">Deterministic Multi-Agent</span>
+          </div>
+          <p class="text-xs text-slate-500">Heat-Stress Decision Engine for Dubai · Schools &amp; Workforces</p>
+        </div>
+      </div>
+
+      <!-- Quick Controls: Live Clock & Zone & Population Group -->
+      <div class="flex flex-wrap items-center gap-3">
+        
+        <!-- Live Dubai Clock -->
+        <div class="px-3 py-1.5 rounded-lg bg-white border border-slate-200 text-xs flex items-center gap-2 shadow-sm" id="dubai-clock">
+          <span class="text-sky-700 font-mono font-bold">--:--:--</span>
+        </div>
+
+        <!-- Population Group Toggle -->
+        <div class="flex items-center rounded-lg bg-slate-100 p-1 border border-slate-200 text-xs font-medium">
+          <button class="group-toggle-btn px-3 py-1 rounded-md transition text-slate-600 hover:text-slate-900" data-group="school" title="School Population (Vulnerability 1.0x)">
+            School
+          </button>
+          <button class="group-toggle-btn px-3 py-1 rounded-md transition text-slate-600 hover:text-slate-900" data-group="outdoor_worker" title="Outdoor Workforce (Vulnerability 1.05x, MOHRE Midday Ban)">
+            Worker
+          </button>
+        </div>
+
+        <!-- Zone Selector -->
+        <select id="zone-selector" class="bg-white border border-slate-300 text-slate-800 text-xs rounded-lg px-3 py-2 focus:ring-2 focus:ring-sky-500 focus:outline-none max-w-[240px] truncate font-medium shadow-sm">
+          <option value="">Loading Dubai Zones...</option>
+        </select>
+
+      </div>
+    </div>
+
+    <!-- NAVIGATION TAB BAR -->
+    <div class="border-t border-slate-200/80 bg-white/60">
+      <div class="max-w-7xl mx-auto px-4 flex items-center gap-1 overflow-x-auto text-xs font-semibold text-slate-600 scrollbar-none py-1">
+        <button class="nav-tab active px-3.5 py-2 rounded-md whitespace-nowrap" data-tab="overview">
+          Operations Monitor
+        </button>
+        <button class="nav-tab px-3.5 py-2 rounded-md whitespace-nowrap" data-tab="supervisor">
+          24h Supervisor Simulation
+        </button>
+        <button class="nav-tab px-3.5 py-2 rounded-md whitespace-nowrap" data-tab="multiagent">
+          Multi-Agent Protocol &amp; Transcript
+        </button>
+        <button class="nav-tab px-3.5 py-2 rounded-md whitespace-nowrap" data-tab="hitl">
+          Approval Queue (HITL)
+          <span id="hitl-badge-count" class="ml-1.5 px-2 py-0.2 rounded-full text-[10px] font-bold bg-slate-200 text-slate-700">0</span>
+        </button>
+        <button class="nav-tab px-3.5 py-2 rounded-md whitespace-nowrap" data-tab="sandbox">
+          Risk Sandbox &amp; Dispute Injector
+        </button>
+        <button class="nav-tab px-3.5 py-2 rounded-md whitespace-nowrap" data-tab="audit">
+          Append-Only Audit Log
+        </button>
+        <button class="nav-tab px-3.5 py-2 rounded-md whitespace-nowrap" data-tab="benchmarks">
+          Validation &amp; Replays
+        </button>
+        <button class="nav-tab px-3.5 py-2 rounded-md whitespace-nowrap" data-tab="docs">
+          Architecture &amp; Rationale
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
+
+    <!-- MOHRE MIDDAY BAN ALERT (CONDITIONAL) -->
+    <div id="mohre-midday-banner" class="hidden mb-6 p-4 rounded-xl border border-red-200 bg-red-50/90 backdrop-blur-md flex items-center justify-between gap-4 animate-fade-in shadow-sm">
+      <div>
+        <h4 class="font-bold text-sm text-red-800 uppercase tracking-wide">MOHRE UAE Midday Work Ban Alert (12:30 – 15:00)</h4>
+        <p class="text-xs text-red-700 mt-0.5">WBGT heat stress has crossed the extreme threshold (≥ 32.0°C). Mandatory cessation of outdoor direct sunlight work is legally active.</p>
+      </div>
+      <span class="px-3 py-1 rounded-md text-xs font-bold bg-red-600 text-white shadow whitespace-nowrap">MANDATORY SUSPENSION</span>
+    </div>
+
+    <!-- ==================== TAB 1: OPERATIONS MONITOR ==================== -->
+    <section id="tab-overview" class="tab-pane space-y-6">
+      
+      <!-- Top Row: WBGT Big Gauge + Telemetry Cards -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Big WBGT Indicator Card -->
+        <div class="lg:col-span-5 glass-panel-accent p-6 flex flex-col justify-between relative overflow-hidden">
+          <div class="flex items-start justify-between">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Current Derived Index</span>
+              <h2 class="text-xl font-bold text-slate-900 mt-0.5">Wet-Bulb Globe Temp (WBGT)</h2>
+            </div>
+            <span id="overview-risk-badge" class="px-3 py-1 rounded-full text-xs font-bold tracking-wider uppercase border badge-low">
+              LOW RISK
+            </span>
+          </div>
+
+          <div class="my-6 flex items-baseline gap-3">
+            <span id="overview-wbgt" class="text-6xl font-bold tracking-tight text-slate-900 font-mono">--.-</span>
+            <span class="text-2xl font-bold text-slate-500">°C</span>
+            <span class="text-xs text-slate-400 font-mono self-end pb-1">(Occupational Threshold: 28.0 °C)</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 pt-4 border-t border-slate-200 text-xs">
+            <div>
+              <span class="text-slate-500 block">Assessed Risk Score:</span>
+              <span id="overview-risk-score" class="font-bold text-sky-700 font-mono text-sm">--%</span>
+            </div>
+            <div>
+              <span class="text-slate-500 block">Population Vulnerability Weight:</span>
+              <span id="overview-vulnerability" class="font-bold text-amber-700 font-mono text-sm">1.00x</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Telemetry Cards Grid -->
+        <div class="lg:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-4">
+          
+          <div class="glass-panel p-4 flex flex-col justify-between">
+            <span class="text-xs text-slate-500 font-medium">Ambient Air Temp</span>
+            <div id="card-air-temp" class="text-2xl font-bold text-slate-900 font-mono my-2">--.- °C</div>
+            <span class="text-[11px] text-slate-400">2 m ERA5 / Station Reading</span>
+          </div>
+
+          <div class="glass-panel p-4 flex flex-col justify-between">
+            <span class="text-xs text-slate-500 font-medium">Relative Humidity</span>
+            <div id="card-humidity" class="text-2xl font-bold text-slate-900 font-mono my-2">-- %</div>
+            <span class="text-[11px] text-slate-400">Moisture vapor load</span>
+          </div>
+
+          <div class="glass-panel p-4 flex flex-col justify-between">
+            <span class="text-xs text-slate-500 font-medium">Satellite LST</span>
+            <div id="card-lst" class="text-2xl font-bold text-slate-900 font-mono my-2">--.- °C</div>
+            <span class="text-[11px] text-slate-400">Land surface temp</span>
+          </div>
+
+          <div class="glass-panel p-4 flex flex-col justify-between">
+            <span class="text-xs text-slate-500 font-medium">Active Decision Tier</span>
+            <div id="card-source-tier" class="text-lg font-bold text-sky-700 font-mono my-2 truncate">weather-outdoor</div>
+            <span class="text-[11px] text-slate-400">Authoritative sensor tier</span>
+          </div>
+
+          <div class="glass-panel p-4 flex flex-col justify-between">
+            <span class="text-xs text-slate-500 font-medium">Control Plane</span>
+            <div class="text-lg font-bold text-emerald-700 font-mono my-2">Deterministic</div>
+            <span class="text-[11px] text-slate-400">0% LLM in decision loop</span>
+          </div>
+
+          <div class="glass-panel p-4 flex flex-col justify-between">
+            <span class="text-xs text-slate-500 font-medium">Regulatory Standard</span>
+            <div class="text-lg font-bold text-amber-700 font-mono my-2">ISO 7243</div>
+            <span class="text-[11px] text-slate-400">Occupational heat standard</span>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- Bottom Row: Interventions Matrix & Official Advisory Box -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Interventions Card -->
+        <div class="lg:col-span-7 glass-panel p-5">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Intervention Matrix &amp; Gate Outcomes</h3>
+              <p class="text-xs text-slate-500">Decisions produced by PlanAgent and evaluated by the Approval Gate.</p>
+            </div>
+            <span class="text-xs text-slate-400 font-mono">Consequential Guardrail Enforced</span>
+          </div>
+
+          <div id="overview-actions-list" class="space-y-3">
+            <div class="text-slate-400 text-xs italic">Loading actions...</div>
+          </div>
+        </div>
+
+        <!-- Formal Advisory Channel Card -->
+        <div class="lg:col-span-5 glass-panel p-5 flex flex-col">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Automated Notification Channel</h3>
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">channels/notify.py</span>
+          </div>
+          <p class="text-xs text-slate-500 mb-3">Structured, LLM-free synthesized advisory for site coordinators &amp; school principals.</p>
+          
+          <pre id="overview-advisory-text" class="flex-1 p-3.5 rounded-lg bg-slate-900 text-sky-300 font-mono text-[11px] overflow-x-auto whitespace-pre leading-relaxed select-all">Loading advisory dispatch...</pre>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ==================== TAB 2: 24-HOUR SUPERVISOR ==================== -->
+    <section id="tab-supervisor" class="tab-pane hidden space-y-6">
+      
+      <!-- Timeline Chart Card -->
+      <div class="glass-panel p-6">
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-slate-900">24-Hour Supervisor Diurnal Heat Curve</h2>
+            <p class="text-xs text-slate-500">Hourly control cycles over archived ERA5 reanalysis data (<span class="font-mono text-sky-700">src/sahra/supervisor.py</span>).</p>
+          </div>
+          <div id="step-peak-info" class="text-xs font-mono px-3 py-1.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700">
+            Peak Day WBGT: --
+          </div>
+        </div>
+
+        <!-- Chart Container -->
+        <div class="h-72 w-full relative">
+          <canvas id="supervisorChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Playback & Hour Inspector -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Controls & Scrubber -->
+        <div class="lg:col-span-5 glass-panel p-5 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Hourly Step Inspector</span>
+              <span id="step-hour-display" class="text-2xl font-bold text-sky-700 font-mono">14:00</span>
+            </div>
+            
+            <!-- Range Slider -->
+            <input type="range" id="step-slider" min="0" max="23" value="14" class="w-full my-4">
+            
+            <!-- Controls Buttons -->
+            <div class="flex items-center justify-center gap-3">
+              <button id="btn-prev-hour" class="px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 border border-slate-200 transition">
+                Previous Hour
+              </button>
+              <button id="btn-play-pause" class="px-5 py-1.5 rounded bg-sky-600 hover:bg-sky-500 text-xs font-bold text-white shadow-sm transition">
+                Play
+              </button>
+              <button id="btn-next-hour" class="px-3 py-1.5 rounded bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 border border-slate-200 transition">
+                Next Hour
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-slate-200 mt-4 flex items-center justify-between text-xs text-slate-600">
+            <span>Air Temp: <b id="step-air" class="text-slate-900 font-mono">-- °C</b></span>
+            <span>WBGT: <b id="step-wbgt" class="text-orange-700 font-mono">-- °C</b></span>
+            <span id="step-band-badge" class="px-2 py-0.5 rounded text-[10px] font-bold border badge-low">LOW</span>
+          </div>
+        </div>
+
+        <!-- Step Actions Detail Card -->
+        <div class="lg:col-span-7 glass-panel p-5">
+          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider mb-3">Interventions for this Hour</h3>
+          
+          <div class="space-y-3">
+            <div>
+              <span class="text-xs text-slate-500 block mb-1">Kinds Dispatched For The First Time Today:</span>
+              <div id="step-dispatched-kinds" class="flex flex-wrap gap-1.5">
+                <span class="text-slate-400 italic text-xs">None</span>
+              </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-200">
+              <span class="text-xs text-slate-500 block mb-1">Active Interventions in Force:</span>
+              <div id="step-active-kinds" class="flex flex-wrap gap-1.5">
+                <span class="text-slate-400 italic text-xs">None</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 p-3 rounded bg-slate-50 border border-slate-200 text-[11px] text-slate-600 leading-relaxed">
+            <b class="text-slate-900">Supervisor Logic:</b> A kind dispatched earlier today that the planner proposed again is classified under <code class="text-sky-700 font-mono">active_kinds</code> rather than duplicated. When the band moves, interventions expire deterministically.
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ==================== TAB 3: MULTI-AGENT PROTOCOL ==================== -->
+    <section id="tab-multiagent" class="tab-pane hidden space-y-6">
+      
+      <!-- Agents Architecture Cards -->
+      <div class="glass-panel p-5">
+        <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider mb-3">6-Agent Deterministic Architecture</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          
+          <div class="p-3 rounded-lg border border-blue-200 bg-blue-50/70">
+            <div class="text-blue-800 text-xs font-bold uppercase mb-1">
+              Monitor
+            </div>
+            <p class="text-[11px] text-slate-600">Fuses weather tier, IoT site sensor &amp; satellite LST into HeatState.</p>
+          </div>
+
+          <div class="p-3 rounded-lg border border-amber-200 bg-amber-50/70">
+            <div class="text-amber-800 text-xs font-bold uppercase mb-1">
+              Predict
+            </div>
+            <p class="text-[11px] text-slate-600">Computes WBGT, raises dispute if site and weather diverge &gt; 1.0°C.</p>
+          </div>
+
+          <div class="p-3 rounded-lg border border-purple-200 bg-purple-50/70">
+            <div class="text-purple-800 text-xs font-bold uppercase mb-1">
+              Arbiter
+            </div>
+            <p class="text-[11px] text-slate-600">Rules conflict with conservative-max to ensure safety.</p>
+          </div>
+
+          <div class="p-3 rounded-lg border border-emerald-200 bg-emerald-50/70">
+            <div class="text-emerald-800 text-xs font-bold uppercase mb-1">
+              Plan
+            </div>
+            <p class="text-[11px] text-slate-600">Evidence-linked actions: Advise, Shift, Cooling, Escalate.</p>
+          </div>
+
+          <div class="p-3 rounded-lg border border-rose-200 bg-rose-50/70">
+            <div class="text-rose-800 text-xs font-bold uppercase mb-1">
+              Act (Approval Gate)
+            </div>
+            <p class="text-[11px] text-slate-600">Consequential actions refused without human approver.</p>
+          </div>
+
+          <div class="p-3 rounded-lg border border-cyan-200 bg-cyan-50/70">
+            <div class="text-cyan-800 text-xs font-bold uppercase mb-1">
+              Verify
+            </div>
+            <p class="text-[11px] text-slate-600">Post-cycle invariant verification over the full transcript.</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Arbiter Dispute Alert (Conditional) -->
+      <div id="arbiter-ruling-card" class="hidden p-4 rounded-xl border border-purple-300 bg-purple-50 backdrop-blur-md animate-fade-in shadow-sm">
+        <div>
+          <h4 class="font-bold text-sm text-purple-900 uppercase tracking-wide">Arbiter Conservative-Max Ruling Active</h4>
+          <p class="text-xs text-purple-800 mt-1" id="ruling-reasoning">Conflict resolved.</p>
+          <div class="mt-2 text-xs font-mono text-purple-900">Chosen Ruling WBGT: <b id="ruling-chosen-val" class="text-slate-900">--.- °C</b></div>
+        </div>
+      </div>
+
+      <!-- Live Message Stream -->
+      <div class="glass-panel p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Synchronous Agent Message Transcript</h3>
+            <p class="text-xs text-slate-500">Every message exchanged over the coordinator (<span class="font-mono text-sky-700">src/sahra/coordinator.py</span>).</p>
+          </div>
+          <div id="verifier-badge" class="text-xs font-bold text-emerald-700 font-mono">
+            VERIFICATION PASSED
+          </div>
+        </div>
+
+        <div id="agent-transcript-feed" class="space-y-2.5 max-h-[500px] overflow-y-auto pr-2">
+          <div class="text-slate-400 text-xs italic">Loading transcript messages...</div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==================== TAB 4: HITL APPROVAL QUEUE ==================== -->
+    <section id="tab-hitl" class="tab-pane hidden space-y-6">
+      
+      <div class="glass-panel p-5 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-900">Human-In-The-Loop (HITL) Consequential Guardrail</h2>
+          <p class="text-xs text-slate-500">Consequential actions (such as <code class="text-rose-700 font-mono">ESCALATE</code>) refused by the approval gate are queued here for authorized human sign-off.</p>
+        </div>
+        <button onclick="window.refreshPendingQueue()" class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs text-slate-800 border border-slate-300 font-medium transition shadow-sm">
+          Refresh Queue
+        </button>
+      </div>
+
+      <div id="hitl-cards-container" class="space-y-4">
+        <!-- Rendered dynamically -->
+      </div>
+
+    </section>
+
+    <!-- ==================== TAB 5: RISK SANDBOX & CONFLICT INJECTOR ==================== -->
+    <section id="tab-sandbox" class="tab-pane hidden space-y-6">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Controls Column -->
+        <div class="lg:col-span-6 glass-panel p-5 space-y-5">
+          <div class="border-b border-slate-200 pb-3">
+            <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Microclimate Parameter Tuning</h3>
+            <p class="text-xs text-slate-500">Adjust ambient variables to test the ISO 7243 WBGT physics equations.</p>
+          </div>
+
+          <!-- Air Temperature -->
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-700">Ambient Dry-Bulb Air Temperature (Ta)</span>
+              <span id="val-air-temp" class="text-sky-700 font-mono font-bold">44.0 °C</span>
+            </div>
+            <input type="range" id="slider-air-temp" min="20" max="52" step="0.5" value="44" class="w-full">
+          </div>
+
+          <!-- Relative Humidity -->
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-700">Relative Humidity (RH)</span>
+              <span id="val-rh" class="text-sky-700 font-mono font-bold">60 %</span>
+            </div>
+            <input type="range" id="slider-rh" min="10" max="95" step="1" value="60" class="w-full">
+          </div>
+
+          <!-- Solar Radiation -->
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-700">Global Solar Irradiance (S)</span>
+              <span id="val-solar" class="text-sky-700 font-mono font-bold">850 W/m²</span>
+            </div>
+            <input type="range" id="slider-solar" min="0" max="1200" step="25" value="850" class="w-full">
+          </div>
+
+          <!-- Wind Speed -->
+          <div>
+            <div class="flex justify-between text-xs mb-1">
+              <span class="text-slate-700">10 m Wind Speed (u)</span>
+              <span id="val-wind" class="text-sky-700 font-mono font-bold">2.5 m/s</span>
+            </div>
+            <input type="range" id="slider-wind" min="0.5" max="15" step="0.5" value="2.5" class="w-full">
+          </div>
+
+          <!-- Dispute Toggle -->
+          <div class="pt-4 border-t border-slate-200">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-xs font-bold text-slate-900 block">Inject Sensor Dispute</span>
+                <span class="text-[11px] text-slate-500">Override IoT Site Sensor to differ from Weather Tier</span>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="toggle-dispute" class="sr-only peer">
+                <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-purple-600"></div>
+              </label>
+            </div>
+
+            <div id="container-site-wbgt" class="mt-3 hidden">
+              <div class="flex justify-between text-xs mb-1">
+                <span class="text-slate-700">Site Sensor WBGT Override</span>
+                <span id="val-site-wbgt" class="text-purple-700 font-mono font-bold">29.0 °C</span>
+              </div>
+              <input type="range" id="slider-site-wbgt" min="24" max="40" step="0.5" value="29" class="w-full">
+            </div>
+          </div>
+
+          <button id="btn-run-sandbox" class="w-full py-2.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs shadow-md transition">
+            Run Deterministic 6-Agent Cycle with These Parameters
+          </button>
+        </div>
+
+        <!-- Output Column -->
+        <div class="lg:col-span-6 glass-panel p-5 flex flex-col justify-between">
+          <div>
+            <div class="border-b border-slate-200 pb-3 flex items-center justify-between">
+              <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Derived WBGT &amp; Physics Metrics</h3>
+              <span id="sb-out-band" class="px-3 py-1 rounded-full text-xs font-bold uppercase border badge-extreme">
+                EXTREME
+              </span>
+            </div>
+
+            <div class="my-6 text-center">
+              <span class="text-xs text-slate-500 uppercase tracking-widest font-semibold block">Full Solar-Aware Outdoor WBGT</span>
+              <div class="text-6xl font-bold text-slate-900 font-mono my-1 tracking-tight">
+                <span id="sb-out-wbgt">--.-</span> <span class="text-2xl text-slate-500">°C</span>
+              </div>
+              <span class="text-xs text-slate-400 font-mono">0.7·T_nw + 0.2·T_g + 0.1·T_a (ISO 7243)</span>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 text-xs">
+              <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                <span class="text-slate-500 block">Globe Temp (Tg)</span>
+                <span id="sb-out-globe" class="text-base font-bold text-slate-900 font-mono mt-0.5 block">--.- °C</span>
+                <span class="text-[10px] text-slate-400">Dimiceli black-globe model</span>
+              </div>
+
+              <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+                <span class="text-slate-500 block">No-Solar Fallback</span>
+                <span id="sb-out-fallback" class="text-base font-bold text-slate-700 font-mono mt-0.5 block">--.- °C</span>
+                <span class="text-[10px] text-slate-400">Stull natural wet bulb formula</span>
+              </div>
+            </div>
+
+            <div class="mt-4 p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs flex items-center justify-between">
+              <div>
+                <span class="font-bold text-amber-900 block">Solar Radiation Penalty</span>
+                <span class="text-slate-600 text-[11px]">Direct sunlight heating effect over shaded fallback</span>
+              </div>
+              <span id="sb-out-solar-delta" class="text-lg font-bold text-amber-700 font-mono">+--.- °C</span>
+            </div>
+          </div>
+
+          <div class="p-3 rounded bg-slate-50 border border-slate-200 text-[11px] text-slate-600 mt-4 leading-relaxed">
+            <b class="text-slate-900">Scientific Note:</b> The no-solar fallback understates outdoor heat in the sun by 3–4°C (and up to ~10°C in extreme hot-dry low-wind conditions, Kong &amp; Huber 2022). SAHRA always runs the full solar-aware Dimiceli globe formula when irradiance is available.
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ==================== TAB 6: IMMUTABLE AUDIT LOG ==================== -->
+    <section id="tab-audit" class="tab-pane hidden space-y-6">
+      
+      <div class="glass-panel p-5 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-900">Append-Only Immutable Audit Log</h2>
+          <p class="text-xs text-slate-500">Every decision, refusal, and approval is permanently appended and never rewritten (<span class="font-mono text-sky-700">src/sahra/audit.py</span>).</p>
+        </div>
+        
+        <div class="flex items-center gap-3">
+          <select id="audit-filter-status" class="bg-white border border-slate-300 text-slate-800 text-xs rounded-lg px-3 py-1.5 focus:outline-none font-mono shadow-sm">
+            <option value="all">Status: All Records</option>
+            <option value="executed">Executed Only</option>
+            <option value="refused">Refused Only</option>
+          </select>
+
+          <a href="/api/audit/download" target="_blank" class="px-3 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition shadow-sm">
+            Download .jsonl
+          </a>
+        </div>
+      </div>
+
+      <div class="glass-panel overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-100 text-[11px] font-bold text-slate-600 uppercase tracking-wider font-mono">
+                <th class="p-3">Action ID</th>
+                <th class="p-3">Timestamp (UTC)</th>
+                <th class="p-3">Intervention</th>
+                <th class="p-3">Outcome</th>
+                <th class="p-3">Approver</th>
+                <th class="p-3 text-right">Reason Trace</th>
+              </tr>
+            </thead>
+            <tbody id="audit-table-body">
+              <tr>
+                <td colspan="6" class="p-4 text-center text-slate-500 text-xs">Loading audit records...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ==================== TAB 7: VALIDATION & REPLAYS ==================== -->
+    <section id="tab-benchmarks" class="tab-pane hidden space-y-6">
+      
+      <div class="glass-panel p-5">
+        <h2 class="text-base font-bold text-slate-900">Dubai Historical Replay &amp; Validation Claims</h2>
+        <p class="text-xs text-slate-500 mt-1" id="benchmark-note">Evaluation against Open-Meteo historical archive (ERA5) and official NCM station records.</p>
+      </div>
+
+      <div class="glass-panel overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-100 text-[11px] font-bold text-slate-600 uppercase tracking-wider font-mono">
+                <th class="p-3">Location / Place</th>
+                <th class="p-3">Date</th>
+                <th class="p-3">ERA5 Air Temp</th>
+                <th class="p-3">Humidity</th>
+                <th class="p-3">Outdoor WBGT</th>
+                <th class="p-3">Fallback WBGT</th>
+                <th class="p-3">Risk Band</th>
+                <th class="p-3">MOHRE Status</th>
+              </tr>
+            </thead>
+            <tbody id="benchmarks-container">
+              <tr>
+                <td colspan="8" class="p-4 text-center text-slate-500 text-xs">Loading replay fixtures...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-xl border border-sky-200 bg-sky-50 text-xs text-slate-700 space-y-2">
+        <h4 class="font-bold text-sky-900 uppercase tracking-wider">Research Validation Summary</h4>
+        <p>A controlled 270-run study (Malik &amp; Qureshi 2026, doi:10.5281/zenodo.22957164) demonstrated that LLM-orchestrated multi-agent systems suffered coordination breakdown (74.44% task success), whereas <b>deterministic orchestration recovered 93.33% reliability</b> without inference costs or hallucinated safety overrides.</p>
+      </div>
+
+    </section>
+
+    <!-- ==================== TAB 8: ARCHITECTURE & RATIONALE ==================== -->
+    <section id="tab-docs" class="tab-pane hidden space-y-6">
+      
+      <div class="glass-panel p-6 space-y-4">
+        <h2 class="text-lg font-bold text-slate-900">Why SAHRA AEGIS is 100% Deterministic</h2>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          In mission-critical life-safety applications such as occupational heat-stress monitoring in the United Arab Emirates, non-deterministic language models introduce latency, hallucination risks, and coordination failures.
+        </p>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          SAHRA's core control plane is implemented as a strictly typed state machine (<code class="text-sky-700 font-mono">src/sahra/kernel.py</code>). An LLM is permitted exclusively in external communication channels for phrasing natural language advisories, never in the decision or gating path.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-200">
+          <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
+            <h4 class="text-xs font-bold text-amber-800 uppercase mb-1">0% Silent Downgrade</h4>
+            <p class="text-[11px] text-slate-600">Consequential actions (such as worker evacuation or activity escalation) cannot be silently downgraded or dropped. If no authorized approver is assigned, the action is refused and held in the HITL queue.</p>
+          </div>
+
+          <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
+            <h4 class="text-xs font-bold text-sky-800 uppercase mb-1">Conservative-Max Arbiter</h4>
+            <p class="text-[11px] text-slate-600">When localized IoT weather stations and satellite/grid weather tiers disagree by more than 1.0°C, the Arbiter Agent rules the higher value to ensure worker protection.</p>
+          </div>
+
+          <div class="p-4 rounded-lg bg-slate-50 border border-slate-200">
+            <h4 class="text-xs font-bold text-emerald-800 uppercase mb-1">Append-Only Audit Log</h4>
+            <p class="text-[11px] text-slate-600">All gate decisions, verifications, and approvals are written sequentially to a JSONL log file, creating a tamper-resistant evidence chain for regulatory compliance.</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- TRACE MODAL -->
+  <div id="trace-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 hidden animate-fade-in">
+    <div class="glass-panel p-6 max-w-xl w-full border border-slate-300 shadow-2xl space-y-4 bg-white">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider">Audit Reason Trace</h3>
+        <button onclick="window.closeTraceModal()" class="text-slate-500 hover:text-slate-900 text-sm font-bold">Close</button>
+      </div>
+      <div id="trace-modal-content">
+        <!-- Injected dynamically -->
+      </div>
+      <div class="text-right pt-2">
+        <button onclick="window.closeTraceModal()" class="px-4 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-xs font-semibold text-slate-700 border border-slate-200 transition">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm"></div>
+
+  <!-- GLOBAL LOADING SPINNER -->
+  <div id="global-spinner" class="fixed top-3 right-3 z-50 hidden">
+    <div class="w-5 h-5 border-2 border-sky-600 border-t-transparent rounded-full animate-spin"></div>
+  </div>
+
+  <!-- SCRIPT -->
+  <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>

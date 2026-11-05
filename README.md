@@ -1,5 +1,7 @@
 # SAHRA
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/kswisse/sahra-aegis)
+
 Rules-based multi-agent heat-stress decision engine for Dubai — schools and
 outdoor workforces. SAHRA monitors weather, derives WBGT heat stress, plans
 interventions, enforces human approval for consequential actions, and logs
